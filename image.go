@@ -45,37 +45,44 @@ func (f Image) DebugDraw(screen *ebiten.Image, borderWidth ...int) {
 	screen.DrawImage(DebugImageFromImage(f.img, borderWidth...), f.debugOption(borderWidth...))
 }
 
+func (f Image) WithOption(opt DrawOption) *Image {
+	ff := f.Copy()
+	ff.drawOption = opt.drawOption
+	ff.recalculateOption()
+	return ff
+}
+
 func (f *Image) UpdateImageFromImage(img image.Image) {
 	f.UpdateImage(ebiten.NewImageFromImage(img))
 }
 
 func (f *Image) UpdateImage(img *ebiten.Image) {
 	f.img = img
-	f.recalculate()
+	f.recalculateOption()
 }
 
-func (f *Image) recalculate() {
+func (f *Image) recalculateOption() {
 	bounds := f.img.Bounds()
 	f.updateReference(float64(bounds.Dx()), float64(bounds.Dy()))
 }
 
 // Extension of DrawOption
 
-func (f Image) WithMovement(x, y float64) *Image {
+func (f Image) WithMovement(x, y float64, replace ...bool) *Image {
 	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withMovement(x, y)
+	ff.drawOption = ff.drawOption.withMovement(x, y, replace...)
 	return ff
 }
 
-func (f Image) WithScaleRatio(x, y float64) *Image {
+func (f Image) WithScaleRatio(x, y float64, replace ...bool) *Image {
 	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withScaleRatio(x, y)
+	ff.drawOption = ff.drawOption.withScaleRatio(x, y, replace...)
 	return ff
 }
 
-func (f Image) WithRotation(degree float64) *Image {
+func (f Image) WithRotation(degree float64, replace ...bool) *Image {
 	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withRotation(degree)
+	ff.drawOption = ff.drawOption.withRotation(degree, replace...)
 	return ff
 }
 

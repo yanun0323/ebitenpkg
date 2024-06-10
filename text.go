@@ -40,9 +40,9 @@ func (t *Text) SetText(text string) {
 	t.text = text
 }
 
-func (t *Text) WithText(text string) *Text {
+func (t Text) WithText(text string) *Text {
 	tt := t.Copy()
-	tt.text = text
+	tt.SetText(text)
 	return tt
 }
 
@@ -95,23 +95,30 @@ func (t *Text) WithFontLinsSpace(spacing float64) *Text {
 	return tt
 }
 
+func (t Text) WithOption(opt DrawOption) *Text {
+	tt := t.Copy()
+	tt.drawOption = opt.drawOption
+	tt.recalculateCenter()
+	return tt
+}
+
 // Extension of DrawOption
 
-func (t Text) WithMovement(x, y float64) *Text {
+func (t Text) WithMovement(x, y float64, replace ...bool) *Text {
 	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withMovement(x, y)
+	tt.drawOption = tt.drawOption.withMovement(x, y, replace...)
 	return tt
 }
 
-func (t Text) WithScaleRatio(x, y float64) *Text {
+func (t Text) WithScaleRatio(x, y float64, replace ...bool) *Text {
 	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withScaleRatio(x, y)
+	tt.drawOption = tt.drawOption.withScaleRatio(x, y, replace...)
 	return tt
 }
 
-func (t Text) WithRotation(degree float64) *Text {
+func (t Text) WithRotation(degree float64, replace ...bool) *Text {
 	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withRotation(degree)
+	tt.drawOption = tt.drawOption.withRotation(degree, replace...)
 	return tt
 }
 
