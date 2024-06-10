@@ -18,7 +18,7 @@ func NewImageFromImage(img image.Image, a ...Align) *Image {
 func NewImage(img *ebiten.Image, a ...Align) *Image {
 	return &Image{
 		img:        img,
-		drawOption: NewDrawOption(float64(img.Bounds().Dx()), float64(img.Bounds().Dy()), a...),
+		drawOption: newDrawOption(float64(img.Bounds().Dx()), float64(img.Bounds().Dy()), a...),
 	}
 }
 

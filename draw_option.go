@@ -16,6 +16,12 @@ type DrawOption struct {
 	*drawOption
 }
 
+func NewDrawOption(referenceX, referenceY float64, a ...Align) *DrawOption {
+	return &DrawOption{
+		drawOption: newDrawOption(referenceX, referenceY, a...),
+	}
+}
+
 func (f DrawOption) WithReference(x, y float64) *DrawOption {
 	f.drawOption = f.withReference(x, y)
 	return &f
@@ -34,7 +40,7 @@ type drawOption struct {
 	align     Align
 }
 
-func NewDrawOption(referenceX, referenceY float64, a ...Align) *drawOption {
+func newDrawOption(referenceX, referenceY float64, a ...Align) *drawOption {
 	align := AlignCenter
 	if len(a) != 0 {
 		align = a[0]

@@ -17,7 +17,7 @@ func NewText(t string, size float64, a ...Align) *Text {
 	return &Text{
 		text:       t,
 		font:       NewFont(size),
-		drawOption: NewDrawOption(0, 0, a...),
+		drawOption: newDrawOption(0, 0, a...),
 	}
 }
 
