@@ -1,4 +1,4 @@
-module github.com/yanun0323/ebito
+module github.com/yanun0323/ebitenpkg
 
 go 1.22.3
 

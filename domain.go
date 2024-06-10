@@ -1,4 +1,4 @@
-package ebito
+package ebitenpkg
 
 import "github.com/hajimehoshi/ebiten/v2"
 

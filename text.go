@@ -1,4 +1,4 @@
-package ebito
+package ebitenpkg
 
 import (
 	"image/color"
