@@ -8,4 +8,4 @@
 # Others
 *.yaml
 go.work
-test/*
+test
