@@ -28,8 +28,9 @@ func (f Image) Image() *ebiten.Image {
 
 func (f Image) Copy() *Image {
 	b := f.img.Bounds()
-	f.img = ebiten.NewImage(b.Dx(), b.Dy())
-	f.img.DrawImage(f.img, nil)
+	img := ebiten.NewImage(b.Dx(), b.Dy())
+	img.DrawImage(f.img, nil)
+	f.img = img
 	f.drawOption = f.drawOption.copy()
 	return &f
 }

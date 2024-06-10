@@ -76,7 +76,8 @@ func (f drawOption) Alignment() Align {
 }
 
 func (f drawOption) copy() *drawOption {
-	return &f
+	ff := f
+	return &ff
 }
 
 func (f drawOption) withMovement(x, y float64) *drawOption {
