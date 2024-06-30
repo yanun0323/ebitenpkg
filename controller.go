@@ -178,6 +178,10 @@ func (f *controller) drawOption() *ebiten.DrawImageOptions {
 	return opt
 }
 
+func (f *controller) bound() (w, h float64) {
+	return f.reference.X, f.reference.Y
+}
+
 /*
 	private
 */

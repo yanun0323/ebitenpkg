@@ -10,7 +10,8 @@ import (
 type image struct {
 	Controller
 
-	img *ebiten.Image
+	img           *ebiten.Image
+	debugImgCache *ebiten.Image
 }
 
 func NewImage(img sysimage.Image, a ...Align) Image {
@@ -35,13 +36,13 @@ func (f image) Draw(screen *ebiten.Image) {
 	screen.DrawImage(f.img, f.DrawOption())
 }
 
-/*
-	DebugDrawable
-*/
-
 func (f image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+	if f.debugImgCache == nil {
+		f.debugImgCache = DebugImageFromImage(f.img, clr...)
+	}
+
 	f.Draw(screen)
-	screen.DrawImage(DebugImageFromImage(f.img, clr...), f.DrawOption())
+	screen.DrawImage(f.debugImgCache, f.DrawOption())
 }
 
 /*
@@ -70,6 +71,7 @@ func (f *image) Scale(x float64, y float64, replace ...bool) Image {
 
 func (f *image) updateControllerReference() Image {
 	f.Controller.updateReference(float64(f.img.Bounds().Dx()), float64(f.img.Bounds().Dy()))
+	f.cleanCache()
 	return f
 }
 
@@ -130,3 +132,7 @@ func (f image) Vertexes() []vector {
 /*
 	private
 */
+
+func (f *image) cleanCache() {
+	f.debugImgCache = nil
+}

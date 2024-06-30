@@ -22,13 +22,15 @@ type text struct {
 	face        ebitentext.Face
 	color       color.Color
 	lineSpacing float64
+
+	debugImgCache *ebiten.Image
 }
 
 func NewText(s string, size float64, a ...Align) Text {
 	return (&text{
 		s:          s,
 		size:       size,
-		face:       newFace(size),
+		face:       text{}.newFace(size),
 		Controller: NewController(0, 0, a...),
 	}).updateControllerReference()
 }
@@ -37,7 +39,7 @@ func newText(s string, size float64, ctr Controller) Text {
 	return (&text{
 		s:          s,
 		size:       size,
-		face:       newFace(size),
+		face:       text{}.newFace(size),
 		Controller: ctr,
 	}).updateControllerReference()
 }
@@ -53,14 +55,13 @@ func (t text) Draw(screen *ebiten.Image) {
 	})
 }
 
-/*
-	DebugDrawable
-*/
-
 func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+	if t.debugImgCache == nil {
+		w, h := t.Bound()
+		t.debugImgCache = DebugImage(int(w), int(h), clr...)
+	}
 	t.Draw(screen)
-	w, h := t.Bound()
-	screen.DrawImage(DebugImage(int(w), int(h), clr...), t.DrawOption())
+	screen.DrawImage(t.debugImgCache, t.DrawOption())
 }
 
 /*
@@ -90,6 +91,7 @@ func (t *text) Scale(x float64, y float64, replace ...bool) Text {
 func (t *text) updateControllerReference() Text {
 	w, h := t.Bound()
 	t.Controller.updateReference(w, h)
+	t.cleanCache()
 	return t
 }
 
@@ -98,7 +100,7 @@ func (t *text) updateControllerReference() Text {
 */
 
 func (t text) Copy(with ...Controller) Text {
-	t.face = newFace(t.Size())
+	t.face = t.newFace(t.Size())
 
 	if len(with) != 0 && with[0] != nil {
 		t.Controller = with[0]
@@ -125,7 +127,7 @@ func (t *text) SetText(text string) Text {
 
 func (t *text) SetSize(size float64) Text {
 	t.size = size
-	t.face = newFace(size)
+	t.face = t.newFace(size)
 	return t.updateControllerReference()
 }
 
@@ -161,7 +163,7 @@ func (t text) Vertexes() []vector {
 	private
 */
 
-func newFace(size float64) ebitentext.Face {
+func (text) newFace(size float64) ebitentext.Face {
 	opt := &opentype.FaceOptions{
 		Size:    size,
 		DPI:     _dpi,
@@ -179,4 +181,8 @@ func newFace(size float64) ebitentext.Face {
 	}
 
 	return ebitentext.NewGoXFace(ft)
+}
+
+func (t *text) cleanCache() {
+	t.debugImgCache = nil
 }

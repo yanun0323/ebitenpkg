@@ -73,6 +73,16 @@ type CollidableImage interface {
 	GetImage() Image
 }
 
+//go:generate domaingen -destination=collidable_polygon.go -name=collidablePolygon -package=ebitenpkg -noembed
+type CollidablePolygon interface {
+	Drawable
+	Collidable
+	embedController[CollidablePolygon]
+
+	NewImage(sysimage.Image) Image
+	NewText(s string, size float64) Text
+}
+
 //go:generate domaingen -destination=body.go -name=body -package=ebitenpkg -noembed
 type Collidable interface {
 	ID() ID
@@ -101,4 +111,5 @@ type embedController[T any] interface {
 	updateReference(x, y float64)
 	rotationCenter() vector
 	vertexes() []vector
+	bound() (w, h float64)
 }
