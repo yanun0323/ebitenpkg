@@ -3,127 +3,180 @@ package ebitenpkg
 import (
 	"image/color"
 
+	ebitenfonts "github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	ebitentext "github.com/hajimehoshi/ebiten/v2/text/v2"
+	gofont "golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
-type Text struct {
-	text        string
-	font        *Font // cache
-	*drawOption       // cache
+const (
+	_dpi = 72
+)
+
+type text struct {
+	Controller
+
+	s           string
+	size        float64
+	face        ebitentext.Face
+	color       color.Color
+	lineSpacing float64
 }
 
-func NewText(t string, size float64, a ...Align) *Text {
-	return &Text{
-		text:       t,
-		font:       NewFont(size),
-		drawOption: newDrawOption(0, 0, a...),
-	}
+func NewText(s string, size float64, a ...Align) Text {
+	return (&text{
+		s:          s,
+		size:       size,
+		face:       newFace(size),
+		Controller: NewController(0, 0, a...),
+	}).updateControllerReference()
 }
 
-func (t Text) Text() string {
-	return t.text
+func newText(s string, size float64, ctr Controller) Text {
+	return (&text{
+		s:          s,
+		size:       size,
+		face:       newFace(size),
+		Controller: ctr,
+	}).updateControllerReference()
 }
 
-func (t Text) Size() (w, h float64) {
-	return text.Measure(t.text, t.font.GoXFace(), t.font.LinsSpace())
-}
+/*
+	Drawable
+*/
 
-func (t Text) Copy() *Text {
-	opt := *t.drawOption
-	t.drawOption = &opt
-	t.font = t.font.Copy()
-	return &t
-}
-
-func (t *Text) SetText(text string) {
-	t.text = text
-}
-
-func (t Text) WithText(text string) *Text {
-	tt := t.Copy()
-	tt.SetText(text)
-	return tt
-}
-
-func (t Text) Draw(screen *ebiten.Image) {
-	w, h := t.Size()
-	t.drawOption.updateReference(w, h)
-	text.Draw(screen, t.text, t.font.GoXFace(), &text.DrawOptions{
-		DrawImageOptions: *t.drawOption.Option(),
-		LayoutOptions:    t.font.LayoutOption(true),
+func (t text) Draw(screen *ebiten.Image) {
+	ebitentext.Draw(screen, t.s, t.face, &ebitentext.DrawOptions{
+		DrawImageOptions: *t.Controller.DrawOption(),
+		LayoutOptions:    ebitentext.LayoutOptions{LineSpacing: t.lineSpacing},
 	})
 }
 
-func (t Text) DebugDraw(screen *ebiten.Image, borderWidth ...int) {
+/*
+	DebugDrawable
+*/
+
+func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
 	t.Draw(screen)
-	w, h := t.Size()
-	screen.DrawImage(DebugImage(int(w), int(h), borderWidth...), t.debugOption(borderWidth...))
+	w, h := t.Bound()
+	screen.DrawImage(DebugImage(int(w), int(h), clr...), t.DrawOption())
 }
 
-// Extension of Font
+/*
+	embedController
+*/
 
-func (t Text) Font() *Font {
-	return t.font
+func (t *text) Align(a Align) Text {
+	t.Controller.Align(a)
+	return t
 }
 
-func (t *Text) FontGoXFace() *text.GoXFace {
-	return t.font.face
+func (t *text) Move(x float64, y float64, replace ...bool) Text {
+	t.Controller.Move(x, y, replace...)
+	return t
 }
 
-func (t *Text) FontSize() float64 {
-	return t.font.size
+func (t *text) Rotate(degree float64, replace ...bool) Text {
+	t.Controller.Rotate(degree, replace...)
+	return t
 }
 
-func (t *Text) FontColor() color.Color {
-	return t.font.color
+func (t *text) Scale(x float64, y float64, replace ...bool) Text {
+	t.Controller.Scale(x, y, replace...)
+	return t
 }
 
-func (t *Text) FontLinsSpace() float64 {
-	return t.font.lineSpacing
+func (t *text) updateControllerReference() Text {
+	w, h := t.Bound()
+	t.Controller.updateReference(w, h)
+	return t
 }
 
-func (t *Text) WithFontColor(c color.Color) *Text {
-	tt := t.Copy()
-	tt.font.WithColor(c)
-	return tt
+/*
+	Text
+*/
+
+func (t text) Copy(with ...Controller) Text {
+	t.face = newFace(t.Size())
+
+	if len(with) != 0 && with[0] != nil {
+		t.Controller = with[0]
+		return t.updateControllerReference()
+	}
+
+	return &t
 }
 
-func (t *Text) WithFontLinsSpace(spacing float64) *Text {
-	tt := t.Copy()
-	tt.font.WithLinsSpace(spacing)
-	return tt
+func (t *text) SetColor(c color.Color) Text {
+	t.color = c
+	return t
 }
 
-func (t Text) WithOption(opt DrawOption) *Text {
-	tt := t.Copy()
-	tt.drawOption = opt.drawOption
-	tt.recalculateCenter()
-	return tt
+func (t *text) SetLineSpacing(l float64) Text {
+	t.lineSpacing = l
+	return t.updateControllerReference()
 }
 
-// Extension of DrawOption
-
-func (t Text) WithMovement(x, y float64, replace ...bool) *Text {
-	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withMovement(x, y, replace...)
-	return tt
+func (t *text) SetText(text string) Text {
+	t.s = text
+	return t.updateControllerReference()
 }
 
-func (t Text) WithScaleRatio(x, y float64, replace ...bool) *Text {
-	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withScaleRatio(x, y, replace...)
-	return tt
+func (t *text) SetSize(size float64) Text {
+	t.size = size
+	t.face = newFace(size)
+	return t.updateControllerReference()
 }
 
-func (t Text) WithRotation(degree float64, replace ...bool) *Text {
-	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withRotation(degree, replace...)
-	return tt
+func (t text) Bound() (w, h float64) {
+	return ebitentext.Measure(t.s, t.face, t.lineSpacing)
 }
 
-func (t Text) WithAlignment(a Align) *Text {
-	tt := t.Copy()
-	tt.drawOption = tt.drawOption.withAlignment(a)
-	return tt
+func (t text) Color() color.Color {
+	return t.color
+}
+
+func (f text) GetController() Controller {
+	return f.Controller
+}
+
+func (t text) LineSpacing() float64 {
+	return t.lineSpacing
+}
+
+func (t text) Text() string {
+	return t.s
+}
+
+func (t text) Size() float64 {
+	return t.size
+}
+
+func (t text) Vertexes() []vector {
+	return t.vertexes()
+}
+
+/*
+	private
+*/
+
+func newFace(size float64) ebitentext.Face {
+	opt := &opentype.FaceOptions{
+		Size:    size,
+		DPI:     _dpi,
+		Hinting: gofont.HintingNone,
+	}
+
+	ff, err := opentype.Parse(ebitenfonts.MPlus1pRegular_ttf)
+	if err != nil {
+		return ebitentext.NewGoXFace(nil)
+	}
+
+	ft, err := opentype.NewFace(ff, opt)
+	if err != nil {
+		return ebitentext.NewGoXFace(nil)
+	}
+
+	return ebitentext.NewGoXFace(ft)
 }

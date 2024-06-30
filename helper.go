@@ -1,40 +1,28 @@
 package ebitenpkg
 
 import (
+	sysimage "image"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const (
-	_defaultDebugBorderWidth = 1
+var (
+	_defaultDebugColor color.Color = color.RGBA{G: 100, A: 100}
 )
 
-func DebugImageFromImage(img *ebiten.Image, borderWidth ...int) *ebiten.Image {
+func DebugImageFromImage(img sysimage.Image, clr ...color.Color) *ebiten.Image {
 	bound := img.Bounds()
-	return DebugImage(bound.Dx(), bound.Dy(), borderWidth...)
+	return DebugImage(bound.Dx(), bound.Dy(), clr...)
 }
 
-func DebugImage(w, h int, borderWidth ...int) *ebiten.Image {
-	b := _defaultDebugBorderWidth
-	if len(borderWidth) != 0 && borderWidth[0] >= 0 {
-		b = borderWidth[0]
+func DebugImage(w, h int, clr ...color.Color) *ebiten.Image {
+	debugColor := _defaultDebugColor
+	if len(clr) != 0 && clr[0] != nil {
+		debugColor = clr[0]
 	}
 
-	debugImg := ebiten.NewImage(w+b*2, h+b*2)
-	bound := debugImg.Bounds()
-	trailingX := bound.Dx() - b
-	trailingY := bound.Dy() - b
-	centerX := bound.Dx() / 2
-	centerY := bound.Dy() / 2
-
-	for x := 0; x < bound.Dx(); x++ {
-		for y := 0; y < bound.Dy(); y++ {
-			if x <= b || y <= b || x >= trailingX || y >= trailingY || x == centerX || y == centerY {
-				debugImg.Set(x, y, color.White)
-			}
-		}
-	}
-
+	debugImg := ebiten.NewImage(w, h)
+	debugImg.Fill(debugColor)
 	return debugImg
 }

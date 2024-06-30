@@ -3,6 +3,7 @@ module github.com/yanun0323/ebitenpkg
 go 1.22.3
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/hajimehoshi/ebiten v1.12.12
 	github.com/hajimehoshi/ebiten/v2 v2.7.4
 	golang.org/x/image v0.16.0

@@ -1,93 +1,132 @@
 package ebitenpkg
 
 import (
-	"image"
+	sysimage "image"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Image struct {
+type image struct {
+	Controller
+
 	img *ebiten.Image
-	*drawOption
 }
 
-func NewImageFromImage(img image.Image, a ...Align) *Image {
-	return NewImage(ebiten.NewImageFromImage(img), a...)
+func NewImage(img sysimage.Image, a ...Align) Image {
+	return (&image{
+		img:        ebiten.NewImageFromImage(img),
+		Controller: NewController(0, 0, a...),
+	}).updateControllerReference()
 }
 
-func NewImage(img *ebiten.Image, a ...Align) *Image {
-	return &Image{
-		img:        img,
-		drawOption: newDrawOption(float64(img.Bounds().Dx()), float64(img.Bounds().Dy()), a...),
+func newImage(img sysimage.Image, ctr Controller) Image {
+	return (&image{
+		img:        ebiten.NewImageFromImage(img),
+		Controller: ctr,
+	}).updateControllerReference()
+}
+
+/*
+	Drawable
+*/
+
+func (f image) Draw(screen *ebiten.Image) {
+	screen.DrawImage(f.img, f.DrawOption())
+}
+
+/*
+	DebugDrawable
+*/
+
+func (f image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+	f.Draw(screen)
+	screen.DrawImage(DebugImageFromImage(f.img, clr...), f.DrawOption())
+}
+
+/*
+	embedController
+*/
+
+func (f *image) Align(a Align) Image {
+	f.Controller.Align(a)
+	return f
+}
+
+func (f *image) Move(x float64, y float64, replace ...bool) Image {
+	f.Controller.Move(x, y, replace...)
+	return f
+}
+
+func (f *image) Rotate(degree float64, replace ...bool) Image {
+	f.Controller.Rotate(degree, replace...)
+	return f
+}
+
+func (f *image) Scale(x float64, y float64, replace ...bool) Image {
+	f.Controller.Scale(x, y, replace...)
+	return f
+}
+
+func (f *image) updateControllerReference() Image {
+	f.Controller.updateReference(float64(f.img.Bounds().Dx()), float64(f.img.Bounds().Dy()))
+	return f
+}
+
+/*
+	Image
+*/
+
+func (f *image) Border(clr color.Color, width int) Image {
+	if width <= 0 {
+		return f
 	}
+
+	b := f.img.Bounds()
+	zX, zY := width-1, width-1
+	lX, lY := b.Dx()-width-1, b.Dy()-width-1
+	for bx := 0; bx < b.Dx(); bx++ {
+		for by := 0; by < b.Dy(); by++ {
+			if bx <= zX || by <= zY || bx >= lX || by >= lY {
+				f.img.Set(bx, by, clr)
+			}
+		}
+	}
+
+	return f
 }
 
-func (f Image) Image() *ebiten.Image {
-	return f.img
-}
-
-func (f Image) Copy() *Image {
+func (f image) Copy(with ...Controller) Image {
 	b := f.img.Bounds()
 	img := ebiten.NewImage(b.Dx(), b.Dy())
 	img.DrawImage(f.img, nil)
 	f.img = img
-	f.drawOption = f.drawOption.copy()
+
+	if len(with) != 0 && with[0] != nil {
+		f.Controller = with[0]
+		return f.updateControllerReference()
+	}
+
 	return &f
 }
 
-// Draw is an alias to screen.DrawImage(img.Image(), img.Option())
-func (f Image) Draw(screen *ebiten.Image) {
-	screen.DrawImage(f.img, f.Option())
+func (f image) GetController() Controller {
+	return f.Controller
 }
 
-func (f Image) DebugDraw(screen *ebiten.Image, borderWidth ...int) {
-	f.Draw(screen)
-	screen.DrawImage(DebugImageFromImage(f.img, borderWidth...), f.debugOption(borderWidth...))
-}
-
-func (f Image) WithOption(opt DrawOption) *Image {
-	ff := f.Copy()
-	ff.drawOption = opt.drawOption
-	ff.recalculateOption()
-	return ff
-}
-
-func (f *Image) UpdateImageFromImage(img image.Image) {
-	f.UpdateImage(ebiten.NewImageFromImage(img))
-}
-
-func (f *Image) UpdateImage(img *ebiten.Image) {
+func (f *image) ReplaceImage(img *ebiten.Image) Image {
 	f.img = img
-	f.recalculateOption()
+	return f.updateControllerReference()
 }
 
-func (f *Image) recalculateOption() {
-	bounds := f.img.Bounds()
-	f.updateReference(float64(bounds.Dx()), float64(bounds.Dy()))
+func (f image) EbitenImage() *ebiten.Image {
+	return f.img
 }
 
-// Extension of DrawOption
-
-func (f Image) WithMovement(x, y float64, replace ...bool) *Image {
-	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withMovement(x, y, replace...)
-	return ff
+func (f image) Vertexes() []vector {
+	return f.vertexes()
 }
 
-func (f Image) WithScaleRatio(x, y float64, replace ...bool) *Image {
-	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withScaleRatio(x, y, replace...)
-	return ff
-}
-
-func (f Image) WithRotation(degree float64, replace ...bool) *Image {
-	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withRotation(degree, replace...)
-	return ff
-}
-
-func (f Image) WithAlignment(a Align) *Image {
-	ff := f.Copy()
-	ff.drawOption = ff.drawOption.withAlignment(a)
-	return ff
-}
+/*
+	private
+*/
