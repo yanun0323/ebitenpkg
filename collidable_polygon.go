@@ -11,7 +11,7 @@ type collidablePolygon struct {
 	Collidable
 	Controller
 
-	debugImgCache *ebiten.Image
+	debugImg debugImage
 }
 
 func NewCollidablePolygon(s Space, t BodyType, w, h float64, a ...Align) CollidablePolygon {
@@ -20,6 +20,7 @@ func NewCollidablePolygon(s Space, t BodyType, w, h float64, a ...Align) Collida
 	cp := &collidablePolygon{
 		Collidable: newCollidable(s, t, ctr),
 		Controller: ctr,
+		debugImg:   newDebugImage(ctr),
 	}
 
 	s.AddBody(cp)
@@ -34,12 +35,7 @@ func NewCollidablePolygon(s Space, t BodyType, w, h float64, a ...Align) Collida
 func (cp *collidablePolygon) Draw(screen *ebiten.Image) {}
 
 func (cp *collidablePolygon) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	if cp.debugImgCache == nil {
-		w, h := cp.bound()
-		cp.debugImgCache = DebugImage(int(w), int(h), clr...)
-	}
-
-	screen.DrawImage(cp.debugImgCache, cp.DrawOption())
+	cp.debugImg.Draw(screen, clr)
 }
 
 /*
@@ -68,7 +64,7 @@ func (cp *collidablePolygon) Scale(x, y float64, replace ...bool) CollidablePoly
 
 func (cp *collidablePolygon) updateControllerReference() CollidablePolygon {
 	cp.Controller = cp.Controller.updateControllerReference()
-	cp.cleanCache()
+	cp.debugImg.CleanCache()
 	return cp
 }
 
@@ -87,7 +83,3 @@ func (cp *collidablePolygon) NewText(s string, size float64) Text {
 /*
 	private
 */
-
-func (cp *collidablePolygon) cleanCache() {
-	cp.debugImgCache = nil
-}

@@ -23,15 +23,17 @@ type text struct {
 	color       color.Color
 	lineSpacing float64
 
-	debugImgCache *ebiten.Image
+	debugImg debugImage
 }
 
 func NewText(s string, size float64, a ...Align) Text {
+	ctr := NewController(0, 0, a...)
 	return (&text{
 		s:          s,
 		size:       size,
 		face:       text{}.newFace(size),
-		Controller: NewController(0, 0, a...),
+		Controller: ctr,
+		debugImg:   newDebugImage(ctr),
 	}).updateControllerReference()
 }
 
@@ -41,6 +43,7 @@ func newText(s string, size float64, ctr Controller) Text {
 		size:       size,
 		face:       text{}.newFace(size),
 		Controller: ctr,
+		debugImg:   newDebugImage(ctr),
 	}).updateControllerReference()
 }
 
@@ -56,12 +59,8 @@ func (t text) Draw(screen *ebiten.Image) {
 }
 
 func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	if t.debugImgCache == nil {
-		w, h := t.Bound()
-		t.debugImgCache = DebugImage(int(w), int(h), clr...)
-	}
+	t.debugImg.Draw(screen, clr)
 	t.Draw(screen)
-	screen.DrawImage(t.debugImgCache, t.DrawOption())
 }
 
 /*
@@ -91,7 +90,7 @@ func (t *text) Scale(x float64, y float64, replace ...bool) Text {
 func (t *text) updateControllerReference() Text {
 	w, h := t.Bound()
 	t.Controller.updateReference(w, h)
-	t.cleanCache()
+	t.debugImg.CleanCache()
 	return t
 }
 
@@ -155,7 +154,7 @@ func (t text) Size() float64 {
 	return t.size
 }
 
-func (t text) Vertexes() []vector {
+func (t text) Vertexes() []Vector {
 	return t.vertexes()
 }
 
@@ -181,8 +180,4 @@ func (text) newFace(size float64) ebitentext.Face {
 	}
 
 	return ebitentext.NewGoXFace(ft)
-}
-
-func (t *text) cleanCache() {
-	t.debugImgCache = nil
 }

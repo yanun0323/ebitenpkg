@@ -32,7 +32,7 @@ type Image interface {
 	GetController() Controller
 	ReplaceImage(*ebiten.Image) Image
 	EbitenImage() *ebiten.Image
-	Vertexes() []vector
+	Vertexes() []Vector
 }
 
 //go:generate domaingen -destination=text.go -name=text -package=ebitenpkg -noembed
@@ -52,12 +52,12 @@ type Text interface {
 	LineSpacing() float64
 	Text() string
 	Size() float64
-	Vertexes() []vector
+	Vertexes() []Vector
 }
 
 //go:generate domaingen -destination=space.go -name=space -package=ebitenpkg
 type Space interface {
-	Update() error
+	Update()
 	AddBody(Collidable) Space
 	RemoveBody(ID) Space
 	IsCollided(ID) bool
@@ -87,9 +87,15 @@ type CollidablePolygon interface {
 type Collidable interface {
 	ID() ID
 	Type() BodyType
+
+	// IsCollided should be call after Space.Update()
 	IsCollided() bool
-	IsCollide(vector) bool
+	IsCollide(Vector) bool
+
+	// GetCollided should be call after Space.Update()
 	GetCollided() []Collidable
+
+	CollideCenter() Vector
 
 	controller() Controller
 }
@@ -109,7 +115,7 @@ type embedController[T any] interface {
 	DrawOption() *ebiten.DrawImageOptions
 
 	updateReference(x, y float64)
-	rotationCenter() vector
-	vertexes() []vector
+	rotationCenter() Vector
+	vertexes() []Vector
 	bound() (w, h float64)
 }

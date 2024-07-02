@@ -10,17 +10,24 @@ type BodyType int
 
 type body struct {
 	Controller
-	id    ID
-	t     BodyType
-	space Space
+	attachedCtr Controller
+	id          ID
+	t           BodyType
+	space       Space
 }
 
-func newCollidable(s Space, t BodyType, ctr Controller) Collidable {
+func newCollidable(s Space, t BodyType, collideCtr Controller, attachedCtr ...Controller) Collidable {
+	attached := NewController(0, 0)
+	if len(attachedCtr) != 0 && attachedCtr[0] != nil {
+		attached = attachedCtr[0]
+	}
+
 	return &body{
-		Controller: ctr,
-		id:         ID(uuid.New()),
-		t:          t,
-		space:      s,
+		Controller:  collideCtr,
+		attachedCtr: attached,
+		id:          ID(uuid.New()),
+		t:           t,
+		space:       s,
 	}
 }
 
@@ -36,7 +43,7 @@ func (b body) IsCollided() bool {
 	return b.space.IsCollided(b.ID())
 }
 
-func (b body) IsCollide(p vector) bool {
+func (b body) IsCollide(p Vector) bool {
 	return isInside(b.vertexes(), p)
 }
 
@@ -46,4 +53,8 @@ func (b body) GetCollided() []Collidable {
 
 func (b *body) controller() Controller {
 	return b.Controller
+}
+
+func (b *body) CollideCenter() Vector {
+	return b.rotationCenter()
 }

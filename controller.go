@@ -9,15 +9,11 @@ import (
 
 var radianToDegree = 180 / math.Pi
 
-type vector struct {
-	X, Y float64
-}
-
 type controller struct {
-	reference vector
-	center    vector
-	movement  vector
-	scale     vector
+	reference Vector
+	center    Vector
+	movement  Vector
+	scale     Vector
 	rotation  float64
 	align     Align
 }
@@ -34,10 +30,10 @@ func newController(referenceX, referenceY float64, a ...Align) controller {
 	}
 
 	return controller{
-		reference: vector{X: referenceX, Y: referenceY},
-		center:    vector{X: referenceX / 2, Y: referenceY / 2},
-		movement:  vector{X: 0, Y: 0},
-		scale:     vector{X: 1, Y: 1},
+		reference: Vector{X: referenceX, Y: referenceY},
+		center:    Vector{X: referenceX / 2, Y: referenceY / 2},
+		movement:  Vector{X: 0, Y: 0},
+		scale:     Vector{X: 1, Y: 1},
 		align:     align,
 	}
 }
@@ -69,9 +65,9 @@ func (f *controller) Align(a Align) Controller {
 
 func (f *controller) Move(x, y float64, replace ...bool) Controller {
 	if len(replace) != 0 && replace[0] {
-		f.movement = vector{X: x, Y: y}
+		f.movement = Vector{X: x, Y: y}
 	} else {
-		f.movement = vector{X: f.movement.X + x, Y: f.movement.Y + y}
+		f.movement = Vector{X: f.movement.X + x, Y: f.movement.Y + y}
 	}
 
 	return f
@@ -89,9 +85,9 @@ func (f *controller) Rotate(degree float64, replace ...bool) Controller {
 
 func (f *controller) Scale(x, y float64, replace ...bool) Controller {
 	if len(replace) != 0 && replace[0] {
-		f.scale = vector{X: x, Y: y}
+		f.scale = Vector{X: x, Y: y}
 	} else {
-		f.scale = vector{X: f.scale.X * x, Y: f.scale.Y * y}
+		f.scale = Vector{X: f.scale.X * x, Y: f.scale.Y * y}
 	}
 
 	return f
@@ -125,35 +121,35 @@ func (f controller) DrawOption() *ebiten.DrawImageOptions {
 	return f.drawOption()
 }
 
-func (f *controller) rotationCenter() vector {
+func (f *controller) rotationCenter() Vector {
 	return f.movement
 }
 
-func (f *controller) vertexes() []vector {
+func (f *controller) vertexes() []Vector {
 	f.updateReferenceCenter()
 
-	result := alignHelper[[]vector]{
-		Center:         []vector{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}},
-		TopCenter:      []vector{{-0.5, 0}, {0.5, 0}, {0.5, 1}, {-0.5, 1}},
-		BottomCenter:   []vector{{-0.5, -1}, {0.5, -1}, {0.5, 0}, {-0.5, 0}},
-		Leading:        []vector{{0, -0.5}, {1, -0.5}, {1, 0.5}, {0, 0.5}},
-		TopLeading:     []vector{{0, 0}, {1, 0}, {1, 1}, {0, 1}},
-		BottomLeading:  []vector{{0, -1}, {1, -1}, {1, 0}, {0, 0}},
-		Trailing:       []vector{{-1, -0.5}, {0, -0.5}, {0, 0.5}, {-1, 0.5}},
-		TopTrailing:    []vector{{-1, 0}, {0, 0}, {0, 1}, {-1, 1}},
-		BottomTrailing: []vector{{-1, -1}, {0, -1}, {0, 0}, {-1, 0}},
+	result := alignHelper[[]Vector]{
+		Center:         []Vector{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}},
+		TopCenter:      []Vector{{-0.5, 0}, {0.5, 0}, {0.5, 1}, {-0.5, 1}},
+		BottomCenter:   []Vector{{-0.5, -1}, {0.5, -1}, {0.5, 0}, {-0.5, 0}},
+		Leading:        []Vector{{0, -0.5}, {1, -0.5}, {1, 0.5}, {0, 0.5}},
+		TopLeading:     []Vector{{0, 0}, {1, 0}, {1, 1}, {0, 1}},
+		BottomLeading:  []Vector{{0, -1}, {1, -1}, {1, 0}, {0, 0}},
+		Trailing:       []Vector{{-1, -0.5}, {0, -0.5}, {0, 0.5}, {-1, 0.5}},
+		TopTrailing:    []Vector{{-1, 0}, {0, 0}, {0, 1}, {-1, 1}},
+		BottomTrailing: []Vector{{-1, -1}, {0, -1}, {0, 0}, {-1, 0}},
 	}.Switch(f.align)
 
 	if len(result) != 4 {
-		result = make([]vector, 4)
+		result = make([]Vector, 4)
 	}
 
 	for i, v := range result {
 		v.X *= f.reference.X
 		v.Y *= f.reference.Y
 
-		v = scaleVector(vector{}, v, f.scale)
-		v = rotateVector(vector{}, v, f.rotation)
+		v = scaleVector(Vector{}, v, f.scale)
+		v = rotateVector(Vector{}, v, f.rotation)
 		v.X += f.movement.X
 		v.Y += f.movement.Y
 		result[i] = v
@@ -163,7 +159,7 @@ func (f *controller) vertexes() []vector {
 }
 
 func (f *controller) updateReference(x, y float64) {
-	f.reference = vector{X: x, Y: y}
+	f.reference = Vector{X: x, Y: y}
 	f.updateReferenceCenter()
 }
 
@@ -187,7 +183,7 @@ func (f *controller) bound() (w, h float64) {
 */
 
 func (f *controller) updateReferenceCenter() {
-	f.center = vector{X: f.reference.X / 2, Y: f.reference.Y / 2}
+	f.center = Vector{X: f.reference.X / 2, Y: f.reference.Y / 2}
 }
 
 func (f controller) alignOffset() (x, y float64) {

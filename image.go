@@ -10,14 +10,16 @@ import (
 type image struct {
 	Controller
 
-	img           *ebiten.Image
-	debugImgCache *ebiten.Image
+	img        *ebiten.Image
+	debugImage debugImage
 }
 
 func NewImage(img sysimage.Image, a ...Align) Image {
+	ctr := NewController(0, 0, a...)
 	return (&image{
 		img:        ebiten.NewImageFromImage(img),
-		Controller: NewController(0, 0, a...),
+		Controller: ctr,
+		debugImage: newDebugImage(ctr),
 	}).updateControllerReference()
 }
 
@@ -37,12 +39,8 @@ func (f image) Draw(screen *ebiten.Image) {
 }
 
 func (f image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	if f.debugImgCache == nil {
-		f.debugImgCache = DebugImageFromImage(f.img, clr...)
-	}
-
+	f.debugImage.Draw(screen, clr)
 	f.Draw(screen)
-	screen.DrawImage(f.debugImgCache, f.DrawOption())
 }
 
 /*
@@ -71,7 +69,7 @@ func (f *image) Scale(x float64, y float64, replace ...bool) Image {
 
 func (f *image) updateControllerReference() Image {
 	f.Controller.updateReference(float64(f.img.Bounds().Dx()), float64(f.img.Bounds().Dy()))
-	f.cleanCache()
+	f.debugImage.CleanCache()
 	return f
 }
 
@@ -125,14 +123,10 @@ func (f image) EbitenImage() *ebiten.Image {
 	return f.img
 }
 
-func (f image) Vertexes() []vector {
+func (f image) Vertexes() []Vector {
 	return f.vertexes()
 }
 
 /*
 	private
 */
-
-func (f *image) cleanCache() {
-	f.debugImgCache = nil
-}

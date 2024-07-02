@@ -110,11 +110,7 @@ func newGame() (ebiten.Game, error) {
 
 func (g *game) Update() error {
 
-	if g.img1.IsCollided() {
-		println("GO Collided")
-	} else {
-		g.img1.Rotate(1)
-	}
+	g.img1.Rotate(1)
 
 	g.tps.Rotate(-1)
 	g.tps.SetText(fmt.Sprintf("TPS: %d", ebiten.TPS()))
@@ -138,15 +134,7 @@ func (g *game) Update() error {
 	}
 	g.vertexes = vertexes
 
-	if err := g.space.Update(); err != nil {
-		return err
-	}
-
-	// println()
-	// for _, vv := range g.img1.GetImage().Vertexes() {
-	// 	print(fmt.Sprintf("{%.2f, %.2f} ", vv.X, vv.Y))
-	// }
-	// println()
+	g.space.Update()
 
 	runtime.GC()
 	return nil
@@ -156,7 +144,13 @@ func (g *game) Draw(screen *ebiten.Image) {
 	for _, gr := range g.grid {
 		gr.Draw(screen)
 	}
-	g.img1.DebugDraw(screen)
+
+	if g.img1.IsCollided() {
+		g.img1.DebugDraw(screen, color.RGBA{R: 100, A: 100})
+	} else {
+		g.img1.DebugDraw(screen)
+	}
+
 	g.tps.DebugDraw(screen)
 	g.fps.DebugDraw(screen)
 	g.ctr.NewText("OPTION", 40).DebugDraw(screen)

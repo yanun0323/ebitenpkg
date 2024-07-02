@@ -1,17 +1,24 @@
 package ebitenpkg
 
+import "sync"
+
 type space struct {
+	mu       *sync.RWMutex
 	bodies   map[ID]Collidable
 	collided map[ID][]Collidable
 }
 
 func NewSpace() Space {
 	return &space{
+		mu:     &sync.RWMutex{},
 		bodies: map[ID]Collidable{},
 	}
 }
 
-func (s *space) Update() error {
+func (s *space) Update() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	collided := make(map[ID][]Collidable, len(s.bodies))
 	bs := make([]Collidable, 0, len(s.bodies))
 
@@ -55,24 +62,38 @@ func (s *space) Update() error {
 	}
 
 	s.collided = collided
-
-	return nil
 }
 
 func (s *space) AddBody(b Collidable) Space {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.bodies[b.ID()] = b
 	return s
 }
 
 func (s *space) RemoveBody(id ID) Space {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	delete(s.bodies, id)
 	return s
 }
 
 func (s *space) IsCollided(id ID) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	return len(s.collided) != 0 && len(s.collided[id]) != 0
 }
 
 func (s *space) GetCollided(id ID) []Collidable {
-	return s.collided[id]
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	c := s.collided[id]
+	result := make([]Collidable, len(c))
+
+	copy(result, c)
+
+	return result
 }

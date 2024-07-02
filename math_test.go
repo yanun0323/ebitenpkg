@@ -8,14 +8,14 @@ import (
 func TestMathIsInside(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		area     []vector
-		p        vector
+		area     []Vector
+		p        Vector
 		expected bool
 	}{
 		{
 			"good",
-			[]vector{{0, 0}, {4, 0}, {4, 4}, {0, 4}},
-			vector{2, 2},
+			[]Vector{{0, 0}, {4, 0}, {4, 4}, {0, 4}},
+			Vector{2, 2},
 			true,
 		},
 	}
@@ -33,22 +33,22 @@ func TestMathIsInside(t *testing.T) {
 func TestPolygonArea(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		area     []vector
+		area     []Vector
 		expected float64
 	}{
 		{
 			"square",
-			[]vector{{0, 0}, {1, 0}, {1, 1}, {0, 1}},
+			[]Vector{{0, 0}, {1, 0}, {1, 1}, {0, 1}},
 			1.0,
 		},
 		{
 			"square exclude zero",
-			[]vector{{-1, -1}, {1, -1}, {1, 1}, {-1, -1}},
+			[]Vector{{-1, -1}, {1, -1}, {1, 1}, {-1, -1}},
 			2.0,
 		},
 		{
 			"rectangle",
-			[]vector{{0, 0}, {8, 0}, {8, 4}, {0, 4}},
+			[]Vector{{0, 0}, {8, 0}, {8, 4}, {0, 4}},
 			32.0,
 		},
 	}
@@ -66,17 +66,17 @@ func TestPolygonArea(t *testing.T) {
 func TestTriangleArea(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		area     []vector
+		area     []Vector
 		expected float64
 	}{
 		{
 			"right-triangle",
-			[]vector{{0, 0}, {4, 0}, {0, 4}},
+			[]Vector{{0, 0}, {4, 0}, {0, 4}},
 			8.0,
 		},
 		{
 			"isosceles-triangle",
-			[]vector{{0, 0}, {8, 0}, {4, 4}},
+			[]Vector{{0, 0}, {8, 0}, {4, 4}},
 			16.0,
 		},
 	}
