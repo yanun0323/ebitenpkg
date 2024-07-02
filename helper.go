@@ -11,12 +11,12 @@ var (
 	_defaultDebugColor color.Color = color.RGBA{G: 100, A: 100}
 )
 
-func DebugImageFromImage(img sysimage.Image, clr ...color.Color) (*ebiten.Image, color.Color) {
+func DebugImageFromImage(img sysimage.Image, clr ...color.Color) *ebiten.Image {
 	bound := img.Bounds()
 	return DebugImage(bound.Dx(), bound.Dy(), clr...)
 }
 
-func DebugImage(w, h int, clr ...color.Color) (*ebiten.Image, color.Color) {
+func DebugImage(w, h int, clr ...color.Color) *ebiten.Image {
 	debugColor := _defaultDebugColor
 	if len(clr) != 0 && clr[0] != nil {
 		debugColor = clr[0]
@@ -24,13 +24,14 @@ func DebugImage(w, h int, clr ...color.Color) (*ebiten.Image, color.Color) {
 
 	debugImg := ebiten.NewImage(w, h)
 	debugImg.Fill(debugColor)
-	return debugImg, debugColor
+	return debugImg
 }
 
 type debugImage struct {
-	ctr   Controller
-	cache *ebiten.Image
-	c     color.Color
+	ctr      Controller
+	defaults *ebiten.Image
+	cache    *ebiten.Image
+	c        color.Color
 }
 
 func newDebugImage(ctr Controller) debugImage {
@@ -41,26 +42,28 @@ func newDebugImage(ctr Controller) debugImage {
 }
 
 func (f *debugImage) Draw(screen *ebiten.Image, clr []color.Color) {
-	if f.cache == nil || f.isColorCached(clr) {
-		w, h := f.ctr.bound()
-		f.cache, f.c = DebugImage(int(w), int(h), clr...)
+	if len(clr) != 0 {
+		if f.cache == nil || !f.isColorEqual(f.c, clr[0]) {
+			w, h := f.ctr.bound()
+			f.cache = DebugImage(int(w), int(h), clr[0])
+		}
+
+		screen.DrawImage(f.cache, f.ctr.DrawOption())
+		return
 	}
 
-	screen.DrawImage(f.cache, f.ctr.DrawOption())
+	if f.defaults == nil {
+		w, h := f.ctr.bound()
+		f.defaults = DebugImage(int(w), int(h), _defaultDebugColor)
+	}
+
+	screen.DrawImage(f.defaults, f.ctr.DrawOption())
 }
 
 func (f *debugImage) CleanCache() {
 	f.cache = nil
+	f.defaults = nil
 	f.c = _defaultDebugColor
-}
-
-func (f debugImage) isColorCached(clr []color.Color) bool {
-	c := _defaultDebugColor
-	if len(clr) != 0 && clr[0] != nil {
-		c = clr[0]
-	}
-
-	return f.isColorEqual(f.c, c)
 }
 
 func (debugImage) isColorEqual(a, b color.Color) bool {

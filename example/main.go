@@ -155,12 +155,13 @@ func (g *game) Draw(screen *ebiten.Image) {
 	}
 
 	if g.img1.IsCollided() {
-		g.img1.DebugDraw(screen, color.RGBA{R: 100, A: 100})
+		// g.img1.DebugDraw(screen, color.RGBA{R: 100, A: 100})
+		println("COllided")
+		g.img2.DebugDraw(screen, color.RGBA{B: 100, A: 100})
 	} else {
-		g.img1.DebugDraw(screen)
+		// g.img1.DebugDraw(screen)
+		g.img2.DebugDraw(screen)
 	}
-
-	g.img2.DebugDraw(screen, color.RGBA{B: 100, A: 100})
 
 	g.tps.DebugDraw(screen)
 	g.fps.DebugDraw(screen)
