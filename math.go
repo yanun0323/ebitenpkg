@@ -2,6 +2,8 @@ package ebitenpkg
 
 import "math"
 
+var _floatFix float64 = 0.001
+
 func isInside(area []Vector, p Vector) bool {
 	switch len(area) {
 	case 3:
@@ -14,7 +16,7 @@ func isInside(area []Vector, p Vector) bool {
 }
 
 func pointInPolygon(a, b, c, d, p Vector) bool {
-	area := polygonArea(a, b, c, d) + 1
+	area := polygonArea(a, b, c, d) + _floatFix
 
 	pAreaSummed := triangleArea(a, b, p) +
 		triangleArea(b, c, p) +
@@ -25,7 +27,7 @@ func pointInPolygon(a, b, c, d, p Vector) bool {
 }
 
 func pointInTriangle(a, b, c, p Vector) bool {
-	area := triangleArea(a, b, c) + 1
+	area := triangleArea(a, b, c) + _floatFix
 
 	pAreaSummed := triangleArea(a, b, p) +
 		triangleArea(b, c, p) +
