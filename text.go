@@ -59,8 +59,8 @@ func (t text) Draw(screen *ebiten.Image) {
 }
 
 func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	t.debugImg.Draw(screen, clr)
 	t.Draw(screen)
+	t.debugImg.Draw(screen, clr)
 }
 
 /*
