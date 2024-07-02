@@ -1,7 +1,6 @@
 package ebitenpkg
 
 import (
-	sysimage "image"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -66,18 +65,6 @@ func (cp *collidablePolygon) updateControllerReference() CollidablePolygon {
 	cp.Controller = cp.Controller.updateControllerReference()
 	cp.debugImg.CleanCache()
 	return cp
-}
-
-/*
-	CollidablePolygon
-*/
-
-func (cp *collidablePolygon) NewImage(img sysimage.Image) Image {
-	return newImage(img, cp.Controller)
-}
-
-func (cp *collidablePolygon) NewText(s string, size float64) Text {
-	return newText(s, size, cp.Controller)
 }
 
 /*

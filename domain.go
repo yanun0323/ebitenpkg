@@ -78,9 +78,6 @@ type CollidablePolygon interface {
 	Drawable
 	Collidable
 	embedController[CollidablePolygon]
-
-	NewImage(sysimage.Image) Image
-	NewText(s string, size float64) Text
 }
 
 //go:generate domaingen -destination=body.go -name=body -package=ebitenpkg -noembed

@@ -27,6 +27,7 @@ var _ ebiten.Game = (*game)(nil)
 type game struct {
 	space    ebitenpkg.Space
 	img1     ebitenpkg.CollidableImage
+	img2     ebitenpkg.CollidablePolygon
 	tps, fps ebitenpkg.Text
 	ctr      ebitenpkg.Controller
 	grid     []ebitenpkg.Image
@@ -48,6 +49,9 @@ func newGame() (ebiten.Game, error) {
 	}
 	s := ebitenpkg.NewSpace()
 	img1 := ebitenpkg.NewCollidableImage(s, 0, img)
+
+	imgBounds := img.Bounds()
+	img2 := ebitenpkg.NewCollidablePolygon(s, 0, float64(imgBounds.Dx()), float64(imgBounds.Dy()))
 
 	gridSize := 50
 	c := color.Gray{50}
@@ -86,6 +90,7 @@ func newGame() (ebiten.Game, error) {
 	g := &game{
 		space:  s,
 		img1:   img1,
+		img2:   img2,
 		tps:    ebitenpkg.NewText("", 30).Align(ebitenpkg.AlignTrailing).SetColor(color.White).SetLineSpacing(3),
 		fps:    ebitenpkg.NewText("", 30).Align(ebitenpkg.AlignTopLeading).SetColor(color.White).SetLineSpacing(3),
 		ctr:    ebitenpkg.NewController(0, 0),
@@ -95,6 +100,9 @@ func newGame() (ebiten.Game, error) {
 	}
 
 	g.img1.
+		Move(400, 50).
+		Scale(-1, -1)
+	g.img2.
 		Move(400, 50).
 		Scale(-1, -1)
 
@@ -111,6 +119,7 @@ func newGame() (ebiten.Game, error) {
 func (g *game) Update() error {
 
 	g.img1.Rotate(1)
+	g.img2.Rotate(1)
 
 	g.tps.Rotate(-1)
 	g.tps.SetText(fmt.Sprintf("TPS: %d", ebiten.TPS()))
@@ -150,6 +159,8 @@ func (g *game) Draw(screen *ebiten.Image) {
 	} else {
 		g.img1.DebugDraw(screen)
 	}
+
+	g.img2.DebugDraw(screen, color.RGBA{B: 100, A: 100})
 
 	g.tps.DebugDraw(screen)
 	g.fps.DebugDraw(screen)
