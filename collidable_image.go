@@ -1,58 +1,160 @@
 package ebitenpkg
 
-import sysimage "image"
+import (
+	sysimage "image"
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 type collidableImage struct {
-	Collidable
-	Image
+	image
+	parent Controllable[any]
+	cd     collider
+	space  Space
 }
 
-func NewCollidableImage(s Space, t BodyType, i sysimage.Image, a ...Align) CollidableImage {
-	img := NewImage(i, a...)
-
-	b := &collidableImage{
-		Collidable: newCollidable(s, t, img.GetController()),
-		Image:      img,
+func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a ...Align) CollidableImage {
+	obj := &collidableImage{
+		image: image{
+			ctr: newController(a...),
+			img: ebiten.NewImageFromImage(img),
+		},
+		parent: nil,
+		cd:     newCollider(bt),
+		space:  space,
 	}
 
-	s.AddBody(b)
+	space.AddBody(obj)
 
-	return b
+	return obj
 }
 
 /*
-	embedController
+	Drawable
+*/
+
+func (ci collidableImage) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+	if len(clr) == 0 && ci.IsCollided() {
+		clr = append(clr, _collidedColor)
+	}
+
+	ci.image.DebugDraw(screen, clr...)
+
+	drawVertexesAndBarycenter(screen, ci.ctr, ci.Vertexes())
+}
+
+/*
+	Controllable
 */
 
 func (ci *collidableImage) Align(a Align) CollidableImage {
-	ci.Image.Align(a)
+	ci.ctr.Align(a)
 	return ci
 }
 
 func (ci *collidableImage) Move(x, y float64, replace ...bool) CollidableImage {
-	ci.Image.Move(x, y, replace...)
+	ci.ctr.Move(x, y, replace...)
 	return ci
 }
 
 func (ci *collidableImage) Rotate(degree float64, replace ...bool) CollidableImage {
-	ci.Image.Rotate(degree, replace...)
+	ci.ctr.Rotate(degree, replace...)
 	return ci
 }
 
 func (ci *collidableImage) Scale(x, y float64, replace ...bool) CollidableImage {
-	ci.Image.Scale(x, y, replace...)
+	ci.ctr.Scale(x, y, replace...)
 	return ci
 }
 
-func (ci *collidableImage) updateControllerReference() CollidableImage {
-	ci.Image = ci.Image.updateControllerReference()
-	return ci
+func (ci collidableImage) DrawOption() *ebiten.DrawImageOptions {
+	w, h := ci.Bounds()
+	if ci.parent == nil {
+		return getDrawOption(w, h, ci.ctr)
+	}
+
+	pW, pH := ci.parent.Bounds()
+	return getDrawOption(w, h, ci.ctr, parent{w: pW, h: pH, ctr: ci.parent})
+}
+
+func (ci collidableImage) Bounds() (w, h float64) {
+	x, y := ci.ctr.Moved()
+	if ci.parent == nil {
+		return x, y
+	}
+
+	pX, pY := ci.parent.Moved()
+	return x + pX, y + pY
+}
+
+/*
+	Collidable
+*/
+
+func (ci collidableImage) ID() ID {
+	return ci.cd.id
+}
+
+func (ci collidableImage) Type() CollisionType {
+	return ci.cd.bt
+}
+
+func (ci collidableImage) IsCollided() bool {
+	return ci.space.IsCollided(ci.ID())
+}
+
+func (ci collidableImage) GetCollided() []Collidable {
+	return ci.space.GetCollided(ci.ID())
+}
+
+func (ci collidableImage) IsInside(x, y float64) bool {
+	return isInside(ci.Vertexes(), Vector{X: x, Y: y})
+}
+
+func (ci collidableImage) Vertexes() []Vector {
+	w, h := ci.Bounds()
+	if ci.parent == nil {
+		return getVertexes(w, h, ci.ctr)
+	}
+
+	pW, pH := ci.parent.Bounds()
+	return getVertexes(w, h, ci.ctr, parent{w: pW, h: pH, ctr: ci.parent})
 }
 
 /*
 	CollidableImage
 */
 
-func (ci *collidableImage) GetImage() Image {
-	return ci.Image
+func (ci *collidableImage) Attach(parent Controllable[any]) CollidableImage {
+	ci.parent = parent
+	return ci
+}
+
+func (ci *collidableImage) Detach() CollidableImage {
+	ci.parent = nil
+	return ci
+}
+
+func (ci *collidableImage) Border(clr color.Color, width int) CollidableImage {
+	ci.image.Border(clr, width)
+	return ci
+}
+
+func (ci collidableImage) Copy() CollidableImage {
+	ci.image = ci.image.copy()
+	ci.cd = newCollider(ci.cd.Type())
+
+	ci.space.AddBody(&ci)
+
+	return &ci
+}
+
+func (ci *collidableImage) ReplaceImage(img *ebiten.Image) CollidableImage {
+	ci.image.ReplaceImage(img)
+	return ci
+}
+
+func (ci collidableImage) EbitenImage() *ebiten.Image {
+	return ci.image.EbitenImage()
 }

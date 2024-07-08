@@ -90,3 +90,43 @@ func TestTriangleArea(t *testing.T) {
 		})
 	}
 }
+
+func TestGetVertexes(t *testing.T) {
+	testCases := []struct {
+		desc string
+		alignHelper[[]Vector]
+	}{
+		{
+			"static",
+			alignHelper[[]Vector]{
+				Center:         []Vector{{-1, -1}, {1, -1}, {1, 1}, {-1, 1}},
+				TopCenter:      []Vector{{-1, 0}, {1, 0}, {1, 2}, {-1, 2}},
+				BottomCenter:   []Vector{{-1, -2}, {1, -2}, {1, 0}, {-1, 0}},
+				Leading:        []Vector{{0, -1}, {2, -1}, {2, 1}, {0, 1}},
+				TopLeading:     []Vector{{0, 0}, {2, 0}, {2, 2}, {0, 2}},
+				BottomLeading:  []Vector{{0, -2}, {2, -2}, {2, 0}, {0, 0}},
+				Trailing:       []Vector{{-2, -1}, {0, -1}, {0, 1}, {-2, 1}},
+				TopTrailing:    []Vector{{-2, 0}, {0, 0}, {0, 2}, {-2, 2}},
+				BottomTrailing: []Vector{{-2, -2}, {0, -2}, {0, 0}, {-2, 0}},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			tc.alignHelper.Execute(func(a Align, v []Vector) {
+				ctr := newController(a)
+				vs := getVertexes(2, 2, ctr)
+				if len(vs) != len(v) {
+					t.Fatalf("expected len %d, but got %d", len(v), len(vs))
+				}
+
+				for i, e := range v {
+					if vs[i].X != e.X || vs[i].Y != e.Y {
+						t.Fatalf("\n[%s] expected at %d should be \n%v, but got \n%v", a.String(), i, v, vs)
+					}
+				}
+			})
+		})
+	}
+}

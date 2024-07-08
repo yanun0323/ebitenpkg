@@ -8,125 +8,135 @@ import (
 )
 
 type image struct {
-	Controller
-
-	img        *ebiten.Image
-	debugImage debugImage
+	ctr             controller
+	debugImageCache debugCache
+	img             *ebiten.Image
 }
 
 func NewImage(img sysimage.Image, a ...Align) Image {
-	ctr := NewController(0, 0, a...)
-	return (&image{
-		img:        ebiten.NewImageFromImage(img),
-		Controller: ctr,
-		debugImage: newDebugImage(ctr),
-	}).updateControllerReference()
-}
-
-func newImage(img sysimage.Image, ctr Controller) Image {
-	return (&image{
-		img:        ebiten.NewImageFromImage(img),
-		Controller: ctr,
-	}).updateControllerReference()
+	return &image{
+		ctr: newController(a...),
+		img: ebiten.NewImageFromImage(img),
+	}
 }
 
 /*
 	Drawable
 */
 
-func (f image) Draw(screen *ebiten.Image) {
-	screen.DrawImage(f.img, f.DrawOption())
+func (im image) Draw(screen *ebiten.Image) {
+	screen.DrawImage(im.img, im.DrawOption())
 }
 
-func (f image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	f.Draw(screen)
-	f.debugImage.Draw(screen, clr)
+func (im image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+	opt := im.DrawOption()
+	debugImg := im.debugImageCache.Image(im.img.Bounds().Dx(), im.img.Bounds().Dy(), clr...)
+	screen.DrawImage(im.img, opt)
+	screen.DrawImage(debugImg, opt)
 }
 
 /*
-	embedController
+	Controllable
 */
 
-func (f *image) Align(a Align) Image {
-	f.Controller.Align(a)
-	return f
+func (im *image) Align(a Align) Image {
+	im.ctr.Align(a)
+	return im
 }
 
-func (f *image) Move(x float64, y float64, replace ...bool) Image {
-	f.Controller.Move(x, y, replace...)
-	return f
+func (im *image) Move(x, y float64, replace ...bool) Image {
+	im.ctr.Move(x, y, replace...)
+	return im
 }
 
-func (f *image) Rotate(degree float64, replace ...bool) Image {
-	f.Controller.Rotate(degree, replace...)
-	return f
+func (im *image) Rotate(degree float64, replace ...bool) Image {
+	im.ctr.Rotate(degree, replace...)
+	return im
 }
 
-func (f *image) Scale(x float64, y float64, replace ...bool) Image {
-	f.Controller.Scale(x, y, replace...)
-	return f
+func (im *image) Scale(x, y float64, replace ...bool) Image {
+	im.ctr.Scale(x, y, replace...)
+	return im
 }
 
-func (f *image) updateControllerReference() Image {
-	f.Controller.updateReference(float64(f.img.Bounds().Dx()), float64(f.img.Bounds().Dy()))
-	f.debugImage.CleanCache()
-	return f
+func (im image) Aligned() Align {
+	return im.ctr.Aligned()
+}
+
+func (im image) Moved() (x, y float64) {
+	return im.ctr.Moved()
+}
+
+func (im image) Rotated() float64 {
+	return im.ctr.Rotated()
+}
+
+func (im image) Scaled() (x, y float64) {
+	return im.ctr.Scaled()
+}
+
+func (im image) DrawOption() *ebiten.DrawImageOptions {
+	w, h := im.Bounds()
+	return getDrawOption(w, h, im.ctr)
+}
+
+func (im image) Bounds() (w, h float64) {
+	b := im.img.Bounds()
+	return float64(b.Dx()), float64(b.Dy())
+}
+
+func (im image) Barycenter() (x, y float64) {
+	return im.ctr.Moved()
 }
 
 /*
 	Image
 */
 
-func (f *image) Border(clr color.Color, width int) Image {
+func (im *image) Border(clr color.Color, width int) Image {
 	if width <= 0 {
-		return f
+		return im
 	}
 
-	b := f.img.Bounds()
+	b := im.img.Bounds()
 	zX, zY := width-1, width-1
 	lX, lY := b.Dx()-width-1, b.Dy()-width-1
 	for bx := 0; bx < b.Dx(); bx++ {
 		for by := 0; by < b.Dy(); by++ {
 			if bx <= zX || by <= zY || bx >= lX || by >= lY {
-				f.img.Set(bx, by, clr)
+				im.img.Set(bx, by, clr)
 			}
 		}
 	}
 
-	return f
+	return im
 }
 
-func (f image) Copy(with ...Controller) Image {
-	b := f.img.Bounds()
-	img := ebiten.NewImage(b.Dx(), b.Dy())
-	img.DrawImage(f.img, nil)
-	f.img = img
-
-	if len(with) != 0 && with[0] != nil {
-		f.Controller = with[0]
-		return f.updateControllerReference()
-	}
-
-	return &f
+func (im image) Copy() Image {
+	cp := im.copy()
+	return &cp
 }
 
-func (f image) GetController() Controller {
-	return f.Controller
+func (im *image) ReplaceImage(img *ebiten.Image) Image {
+	im.img = img
+	im.debugImageCache.Clean()
+	return im
 }
 
-func (f *image) ReplaceImage(img *ebiten.Image) Image {
-	f.img = img
-	return f.updateControllerReference()
-}
-
-func (f image) EbitenImage() *ebiten.Image {
-	return f.img
-}
-
-func (f image) Vertexes() []Vector {
-	return f.vertexes()
+func (im image) EbitenImage() *ebiten.Image {
+	return im.img
 }
 
 /*
-	private
+	Private
 */
+
+func (im image) copy() image {
+	b := im.img.Bounds()
+	img := ebiten.NewImage(b.Dx(), b.Dy())
+	img.DrawImage(im.img, nil)
+	im.img = img
+	im.debugImageCache = im.debugImageCache.Copy()
+
+	return im
+}

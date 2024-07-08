@@ -32,32 +32,12 @@ func (s *space) Update() {
 				continue
 			}
 
-			ivs := bs[i].controller().vertexes()
-			jvs := bs[j].controller().vertexes()
-			collide := false
-
-			for _, p := range ivs {
-				if isInside(jvs, p) {
-					collide = true
-					collided[bs[i].ID()] = append(collided[bs[i].ID()], bs[j])
-					collided[bs[j].ID()] = append(collided[bs[j].ID()], bs[i])
-					break
-				}
+			iv := bs[i].Vertexes()
+			jv := bs[j].Vertexes()
+			if isOverlap(iv, jv) || gjk(iv, jv) {
+				collided[bs[i].ID()] = append(collided[bs[i].ID()], bs[j])
+				collided[bs[j].ID()] = append(collided[bs[j].ID()], bs[i])
 			}
-
-			if collide {
-				continue
-			}
-
-			for _, p := range jvs {
-				if isInside(ivs, p) {
-					collide = true
-					collided[bs[i].ID()] = append(collided[bs[i].ID()], bs[j])
-					collided[bs[j].ID()] = append(collided[bs[j].ID()], bs[i])
-					break
-				}
-			}
-
 		}
 	}
 

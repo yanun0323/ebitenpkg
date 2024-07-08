@@ -1,25 +1,63 @@
 package ebitenpkg
 
 import (
-	sysimage "image"
 	"image/color"
+	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var (
-	_defaultDebugColor color.Color = color.RGBA{G: 100, A: 100}
-)
+var _defaultDebugColor color.Color = color.RGBA{G: 100, A: 100}
 
-func DebugImageFromImage(img sysimage.Image, clr ...color.Color) *ebiten.Image {
-	bound := img.Bounds()
-	return DebugImage(bound.Dx(), bound.Dy(), clr...)
+type debugCache struct {
+	defaultDebugImage *ebiten.Image
+	cachedImage       *ebiten.Image
+	debugColor        color.Color
 }
 
-func DebugImage(w, h int, clr ...color.Color) *ebiten.Image {
+func (f *debugCache) Image(w, h int, clr ...color.Color) *ebiten.Image {
+	if f.debugColor == nil {
+		f.debugColor = _defaultDebugColor
+	}
+
+	if len(clr) != 0 {
+		if f.cachedImage == nil || !isColorEqual(f.debugColor, clr[0]) {
+			f.cachedImage = debugImage(int(w), int(h), clr[0])
+		}
+
+		return f.cachedImage
+	}
+
+	if f.defaultDebugImage == nil {
+		f.defaultDebugImage = debugImage(int(w), int(h), _defaultDebugColor)
+	}
+
+	return f.defaultDebugImage
+}
+
+func (f debugCache) Copy() debugCache {
+	f.defaultDebugImage = nil
+	f.cachedImage = nil
+	return f
+}
+
+func (f *debugCache) Clean() {
+	f.defaultDebugImage = nil
+	f.cachedImage = nil
+}
+
+func debugImage(w, h int, clr ...color.Color) *ebiten.Image {
 	debugColor := _defaultDebugColor
 	if len(clr) != 0 && clr[0] != nil {
 		debugColor = clr[0]
+	}
+
+	if w <= 0 {
+		w = 1
+	}
+
+	if h <= 0 {
+		h = 1
 	}
 
 	debugImg := ebiten.NewImage(w, h)
@@ -27,47 +65,30 @@ func DebugImage(w, h int, clr ...color.Color) *ebiten.Image {
 	return debugImg
 }
 
-type debugImage struct {
-	ctr      Controller
-	defaults *ebiten.Image
-	cache    *ebiten.Image
-	c        color.Color
-}
-
-func newDebugImage(ctr Controller) debugImage {
-	return debugImage{
-		ctr: ctr,
-		c:   _defaultDebugColor,
-	}
-}
-
-func (f *debugImage) Draw(screen *ebiten.Image, clr []color.Color) {
-	if len(clr) != 0 {
-		if f.cache == nil || !f.isColorEqual(f.c, clr[0]) {
-			w, h := f.ctr.bound()
-			f.cache = DebugImage(int(w), int(h), clr[0])
-		}
-
-		screen.DrawImage(f.cache, f.ctr.DrawOption())
-		return
-	}
-
-	if f.defaults == nil {
-		w, h := f.ctr.bound()
-		f.defaults = DebugImage(int(w), int(h), _defaultDebugColor)
-	}
-
-	screen.DrawImage(f.defaults, f.ctr.DrawOption())
-}
-
-func (f *debugImage) CleanCache() {
-	f.cache = nil
-	f.defaults = nil
-	f.c = _defaultDebugColor
-}
-
-func (debugImage) isColorEqual(a, b color.Color) bool {
+func isColorEqual(a, b color.Color) bool {
 	ar, ag, ab, aa := a.RGBA()
 	br, bg, bb, ba := b.RGBA()
 	return ar == br && ag == bg && ab == bb && aa == ba
+}
+
+var (
+	_centerImage     = ebiten.NewImage(5, 5)
+	_centerBaseImage = ebiten.NewImage(5, 5)
+	_vertexImage     = ebiten.NewImage(3, 3)
+)
+
+func drawVertexesAndBarycenter(screen *ebiten.Image, ctr controller, vertexes []Vector) {
+	sync.OnceFunc(func() {
+		_centerImage.Fill(color.RGBA{R: 255, A: 255})
+		_centerBaseImage.Fill(color.White)
+		_vertexImage.Fill(color.White)
+	})()
+
+	mX, mY := ctr.Moved()
+	// NewImage(_centerBaseImage, AlignCenter).Move(mX, mY).Draw(screen)
+	NewImage(_centerImage, AlignCenter).Move(mX, mY).Draw(screen)
+
+	for _, v := range vertexes {
+		NewImage(_vertexImage, AlignCenter).Move(v.X, v.Y).Draw(screen)
+	}
 }

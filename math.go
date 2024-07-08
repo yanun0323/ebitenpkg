@@ -1,8 +1,24 @@
 package ebitenpkg
 
-import "math"
+import (
+	"math"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 var _floatFix float64 = 0.001
+
+func isOverlap(a, b []Vector) bool {
+	for _, v := range a {
+		for _, w := range b {
+			if isInside(a, w) || isInside(b, v) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 func isInside(area []Vector, p Vector) bool {
 	switch len(area) {
@@ -81,4 +97,78 @@ func scaleVector(center, target, scale Vector) Vector {
 	}
 
 	return target
+}
+
+type parent struct {
+	w, h float64
+	ctr  Controllable[any]
+}
+
+func getVertexes(w, h float64, current controller, pr ...parent) []Vector {
+	result := current.Aligned().vertexRatio()
+
+	mX, mY := current.Moved()
+	sX, sY := current.Scaled()
+
+	var (
+		pmX, pmY float64
+		poX, poY float64
+		psX, psY float64
+		pR       float64
+	)
+
+	hasParent := len(pr) != 0 && pr[0].ctr != nil
+
+	if hasParent {
+		pmX, pmY = pr[0].ctr.Moved()
+		poX, poY = pr[0].ctr.Aligned().barycenterOffset(pr[0].w, pr[0].h)
+		psX, psY = pr[0].ctr.Scaled()
+		pR = pr[0].ctr.Rotated()
+	}
+
+	for i, v := range result {
+		v.X *= w
+		v.Y *= h
+
+		v = scaleVector(Vector{}, v, Vector{X: sX, Y: sY})
+		v = rotateVector(Vector{}, v, current.Rotated())
+
+		if hasParent {
+			v.X = v.X + pmX - poX
+			v.Y = v.Y + pmY - poY
+			v = scaleVector(Vector{}, v, Vector{X: psX, Y: psY})
+			v = rotateVector(Vector{}, v, pR)
+		}
+
+		v.X += mX
+		v.Y += mY
+
+		result[i] = v
+	}
+
+	return result
+}
+
+func getDrawOption(w, h float64, current controller, pr ...parent) *ebiten.DrawImageOptions {
+	mX, mY := current.Moved()
+	oX, oY := current.Aligned().barycenterOffset(w, h)
+	sX, sY := current.Scaled()
+
+	opt := &ebiten.DrawImageOptions{}
+	opt.GeoM.Translate(-oX, -oY)
+	opt.GeoM.Scale(sX, sY)
+	opt.GeoM.Rotate(current.Rotated() / radianToDegree)
+
+	if len(pr) != 0 && pr[0].ctr != nil {
+		pmX, pmY := pr[0].ctr.Moved()
+		poX, poY := pr[0].ctr.Aligned().barycenterOffset(pr[0].w, pr[0].h)
+		psX, psY := pr[0].ctr.Scaled()
+		pR := pr[0].ctr.Rotated()
+		opt.GeoM.Translate(pmX-poX, pmY-poY)
+		opt.GeoM.Scale(psX, psY)
+		opt.GeoM.Rotate(pR / radianToDegree)
+	}
+
+	opt.GeoM.Translate(mX, mY)
+	return opt
 }

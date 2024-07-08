@@ -15,36 +15,23 @@ const (
 )
 
 type text struct {
-	Controller
-
-	s           string
-	size        float64
-	face        ebitentext.Face
-	color       color.Color
-	lineSpacing float64
-
-	debugImg debugImage
+	ctr             controller
+	debugImageCache debugCache
+	s               string
+	size            float64
+	face            ebitentext.Face
+	color           color.Color
+	lineSpacing     float64
 }
 
 func NewText(s string, size float64, a ...Align) Text {
-	ctr := NewController(0, 0, a...)
-	return (&text{
-		s:          s,
-		size:       size,
-		face:       text{}.newFace(size),
-		Controller: ctr,
-		debugImg:   newDebugImage(ctr),
-	}).updateControllerReference()
-}
-
-func newText(s string, size float64, ctr Controller) Text {
-	return (&text{
-		s:          s,
-		size:       size,
-		face:       text{}.newFace(size),
-		Controller: ctr,
-		debugImg:   newDebugImage(ctr),
-	}).updateControllerReference()
+	return &text{
+		ctr:   newController(a...),
+		s:     s,
+		size:  size,
+		face:  text{}.newFace(size),
+		color: color.Black,
+	}
 }
 
 /*
@@ -53,58 +40,84 @@ func newText(s string, size float64, ctr Controller) Text {
 
 func (t text) Draw(screen *ebiten.Image) {
 	ebitentext.Draw(screen, t.s, t.face, &ebitentext.DrawOptions{
-		DrawImageOptions: *t.Controller.DrawOption(),
+		DrawImageOptions: *t.DrawOption(),
 		LayoutOptions:    ebitentext.LayoutOptions{LineSpacing: t.lineSpacing},
 	})
 }
 
 func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	t.Draw(screen)
-	t.debugImg.Draw(screen, clr)
+	w, h := t.Bounds()
+	opt := getDrawOption(w, h, t.ctr)
+	debugImage := t.debugImageCache.Image(int(w), int(h), clr...)
+
+	ebitentext.Draw(screen, t.s, t.face, &ebitentext.DrawOptions{
+		DrawImageOptions: *opt,
+		LayoutOptions:    ebitentext.LayoutOptions{LineSpacing: t.lineSpacing},
+	})
+
+	screen.DrawImage(debugImage, opt)
 }
 
 /*
-	embedController
+	Controllable
 */
 
 func (t *text) Align(a Align) Text {
-	t.Controller.Align(a)
+	t.ctr.Align(a)
 	return t
 }
 
-func (t *text) Move(x float64, y float64, replace ...bool) Text {
-	t.Controller.Move(x, y, replace...)
+func (t *text) Move(x, y float64, replace ...bool) Text {
+	t.ctr.Move(x, y, replace...)
 	return t
 }
 
 func (t *text) Rotate(degree float64, replace ...bool) Text {
-	t.Controller.Rotate(degree, replace...)
+	t.ctr.Rotate(degree, replace...)
 	return t
 }
 
-func (t *text) Scale(x float64, y float64, replace ...bool) Text {
-	t.Controller.Scale(x, y, replace...)
+func (t *text) Scale(x, y float64, replace ...bool) Text {
+	t.ctr.Scale(x, y, replace...)
 	return t
 }
 
-func (t *text) updateControllerReference() Text {
-	w, h := t.Bound()
-	t.Controller.updateReference(w, h)
-	t.debugImg.CleanCache()
-	return t
+func (t text) Aligned() Align {
+	return t.ctr.Aligned()
+}
+
+func (t text) Moved() (x, y float64) {
+	return t.ctr.Moved()
+}
+
+func (t text) Rotated() float64 {
+	return t.ctr.Rotated()
+}
+
+func (t text) Scaled() (x, y float64) {
+	return t.ctr.Scaled()
+}
+
+func (t text) DrawOption() *ebiten.DrawImageOptions {
+	w, h := t.Bounds()
+	return getDrawOption(w, h, t.ctr)
+}
+
+func (t text) Bounds() (w, h float64) {
+	return ebitentext.Measure(t.s, t.face, t.lineSpacing)
+}
+
+func (t text) Barycenter() (x, y float64) {
+	return t.ctr.Moved()
 }
 
 /*
 	Text
 */
 
-func (t text) Copy(with ...Controller) Text {
+func (t text) Copy() Text {
 	t.face = t.newFace(t.Size())
-
-	if len(with) != 0 && with[0] != nil {
-		t.Controller = with[0]
-		return t.updateControllerReference()
-	}
+	t.debugImageCache = t.debugImageCache.Copy()
 
 	return &t
 }
@@ -116,30 +129,22 @@ func (t *text) SetColor(c color.Color) Text {
 
 func (t *text) SetLineSpacing(l float64) Text {
 	t.lineSpacing = l
-	return t.updateControllerReference()
+	return t
 }
 
 func (t *text) SetText(text string) Text {
 	t.s = text
-	return t.updateControllerReference()
+	return t
 }
 
 func (t *text) SetSize(size float64) Text {
 	t.size = size
 	t.face = t.newFace(size)
-	return t.updateControllerReference()
-}
-
-func (t text) Bound() (w, h float64) {
-	return ebitentext.Measure(t.s, t.face, t.lineSpacing)
+	return t
 }
 
 func (t text) Color() color.Color {
 	return t.color
-}
-
-func (f text) GetController() Controller {
-	return f.Controller
 }
 
 func (t text) LineSpacing() float64 {
@@ -152,10 +157,6 @@ func (t text) Text() string {
 
 func (t text) Size() float64 {
 	return t.size
-}
-
-func (t text) Vertexes() []Vector {
-	return t.vertexes()
 }
 
 /*
