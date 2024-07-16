@@ -120,6 +120,7 @@ func (a Align) vertexRatio() []Vector {
 	if len(result) != 4 {
 		result = []Vector{{-0.5, -0.5}, {0.5, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}
 	}
+
 	return result
 }
 

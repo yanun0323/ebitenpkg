@@ -12,6 +12,14 @@ type Drawable interface {
 	DebugDraw(screen *ebiten.Image, clr ...color.Color)
 }
 
+type Attachable interface {
+	Aligned() Align
+	Moved() (x, y float64)
+	Rotated() float64
+	Scaled() (x, y float64)
+	Bounds() (w, h float64)
+}
+
 type Controllable[T any] interface {
 	Align(a Align) T
 	Move(x, y float64, replace ...bool) T

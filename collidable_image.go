@@ -9,7 +9,7 @@ import (
 
 type collidableImage struct {
 	image
-	parent Controllable[any]
+	parent Attachable
 	cd     collider
 	space  Space
 }
@@ -79,13 +79,8 @@ func (ci collidableImage) DrawOption() *ebiten.DrawImageOptions {
 }
 
 func (ci collidableImage) Bounds() (w, h float64) {
-	x, y := ci.ctr.Moved()
-	if ci.parent == nil {
-		return x, y
-	}
-
-	pX, pY := ci.parent.Moved()
-	return x + pX, y + pY
+	b := ci.img.Bounds()
+	return float64(b.Dx()), float64(b.Dy())
 }
 
 /*
@@ -126,7 +121,7 @@ func (ci collidableImage) Vertexes() []Vector {
 	CollidableImage
 */
 
-func (ci *collidableImage) Attach(parent Controllable[any]) CollidableImage {
+func (ci *collidableImage) Attach(parent Attachable) CollidableImage {
 	ci.parent = parent
 	return ci
 }

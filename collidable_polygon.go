@@ -9,7 +9,7 @@ import (
 type collidablePolygon struct {
 	w, h   float64
 	ctr    controller
-	parent Controllable[any]
+	parent Attachable
 	cd     collider
 	space  Space
 	img    debugCache
@@ -148,7 +148,7 @@ func (cp collidablePolygon) Vertexes() []Vector {
 	CollidablePolygon
 */
 
-func (cp *collidablePolygon) Attach(parent Controllable[any]) CollidablePolygon {
+func (cp *collidablePolygon) Attach(parent Attachable) CollidablePolygon {
 	cp.parent = parent
 	return cp
 }

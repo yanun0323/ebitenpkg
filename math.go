@@ -1,6 +1,7 @@
 package ebitenpkg
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -101,29 +102,23 @@ func scaleVector(center, target, scale Vector) Vector {
 
 type parent struct {
 	w, h float64
-	ctr  Controllable[any]
+	ctr  Attachable
 }
 
-func getVertexes(w, h float64, current controller, pr ...parent) []Vector {
-	result := current.Aligned().vertexRatio()
+func getVertexes(w, h float64, ctr controller, pr ...parent) []Vector {
+	println(fmt.Sprintf("%.2f, %.2f", w, h))
+	result := ctr.Aligned().vertexRatio()
 
-	mX, mY := current.Moved()
-	sX, sY := current.Scaled()
+	mX, mY := ctr.Moved()
+	sX, sY := ctr.Scaled()
+	println(fmt.Sprintf("moved: %.2f, %.2f, scaled: %.2f, %.2f", mX, mY, sX, sY))
 
-	var (
-		pmX, pmY float64
-		poX, poY float64
-		psX, psY float64
-		pR       float64
-	)
+	var pmX, pmY float64
 
 	hasParent := len(pr) != 0 && pr[0].ctr != nil
 
 	if hasParent {
 		pmX, pmY = pr[0].ctr.Moved()
-		poX, poY = pr[0].ctr.Aligned().barycenterOffset(pr[0].w, pr[0].h)
-		psX, psY = pr[0].ctr.Scaled()
-		pR = pr[0].ctr.Rotated()
 	}
 
 	for i, v := range result {
@@ -131,13 +126,11 @@ func getVertexes(w, h float64, current controller, pr ...parent) []Vector {
 		v.Y *= h
 
 		v = scaleVector(Vector{}, v, Vector{X: sX, Y: sY})
-		v = rotateVector(Vector{}, v, current.Rotated())
+		v = rotateVector(Vector{}, v, ctr.Rotated())
 
 		if hasParent {
-			v.X = v.X + pmX - poX
-			v.Y = v.Y + pmY - poY
-			v = scaleVector(Vector{}, v, Vector{X: psX, Y: psY})
-			v = rotateVector(Vector{}, v, pR)
+			v.X += pmX
+			v.Y += pmY
 		}
 
 		v.X += mX
@@ -146,6 +139,9 @@ func getVertexes(w, h float64, current controller, pr ...parent) []Vector {
 		result[i] = v
 	}
 
+	println(fmt.Sprintf("%v, %v, %v, %v", result[0], result[1], result[2], result[3]))
+
+	println()
 	return result
 }
 
@@ -161,12 +157,7 @@ func getDrawOption(w, h float64, current controller, pr ...parent) *ebiten.DrawI
 
 	if len(pr) != 0 && pr[0].ctr != nil {
 		pmX, pmY := pr[0].ctr.Moved()
-		poX, poY := pr[0].ctr.Aligned().barycenterOffset(pr[0].w, pr[0].h)
-		psX, psY := pr[0].ctr.Scaled()
-		pR := pr[0].ctr.Rotated()
-		opt.GeoM.Translate(pmX-poX, pmY-poY)
-		opt.GeoM.Scale(psX, psY)
-		opt.GeoM.Rotate(pR / radianToDegree)
+		opt.GeoM.Translate(pmX, pmY)
 	}
 
 	opt.GeoM.Translate(mX, mY)

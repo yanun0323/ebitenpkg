@@ -6,32 +6,56 @@ import (
 )
 
 type InputHandler[T ebitenpkg.Controllable[T]] struct {
-	Object T
+	Object         T
+	MoveUp         bool
+	MoveDown       bool
+	MoveLeft       bool
+	MoveLeftScale  bool
+	MoveRight      bool
+	MoveRightScale bool
+	RotateLeft     bool
+	RotateRight    bool
 }
 
-func (i *InputHandler[T]) Update(keys []ebiten.Key) {
+func (i InputHandler[T]) Update(keys []ebiten.Key) {
 	for _, in := range keys {
 		switch in {
 		case ebiten.KeyW:
-			i.Object.Move(0, -5)
+			if i.MoveUp {
+				i.Object.Move(0, -5)
+			}
 		case ebiten.KeyS:
-			i.Object.Move(0, 5)
+			if i.MoveDown {
+				i.Object.Move(0, 5)
+			}
 		case ebiten.KeyA:
-			i.Object.Move(-5, 0)
-			if scaleX, _ := i.Object.Scaled(); scaleX > 0 {
-				i.Object.Rotate(-i.Object.Rotated(), true)
+			if i.MoveLeft {
+				i.Object.Move(-5, 0)
 			}
-			i.Object.Scale(-1, 1, true)
+			if i.MoveLeftScale {
+				if scaleX, _ := i.Object.Scaled(); scaleX > 0 {
+					i.Object.Rotate(-i.Object.Rotated(), true)
+				}
+				i.Object.Scale(-1, 1, true)
+			}
 		case ebiten.KeyD:
-			i.Object.Move(5, 0)
-			if scaleX, _ := i.Object.Scaled(); scaleX < 0 {
-				i.Object.Rotate(-i.Object.Rotated(), true)
+			if i.MoveRight {
+				i.Object.Move(5, 0)
 			}
-			i.Object.Scale(1, 1, true)
+			if i.MoveRightScale {
+				if scaleX, _ := i.Object.Scaled(); scaleX < 0 {
+					i.Object.Rotate(-i.Object.Rotated(), true)
+				}
+				i.Object.Scale(1, 1, true)
+			}
 		case ebiten.KeyQ:
-			i.Object.Rotate(-1)
+			if i.RotateLeft {
+				i.Object.Rotate(-1)
+			}
 		case ebiten.KeyE:
-			i.Object.Rotate(1)
+			if i.RotateRight {
+				i.Object.Rotate(1)
+			}
 		}
 	}
 }

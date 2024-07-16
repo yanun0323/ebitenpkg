@@ -45,7 +45,7 @@ type CollidableImage interface {
 	Controllable[CollidableImage]
 	Collidable
 
-	Attach(parent Controllable[any]) CollidableImage
+	Attach(parent Attachable) CollidableImage
 	Detach() CollidableImage
 	Border(clr color.Color, width int) CollidableImage
 	Copy() CollidableImage
@@ -58,7 +58,7 @@ type CollidablePolygon interface {
 	Controllable[CollidablePolygon]
 	Collidable
 
-	Attach(parent Controllable[any]) CollidablePolygon
+	Attach(parent Attachable) CollidablePolygon
 	Detach() CollidablePolygon
 	ReplaceSize(w, h float64) CollidablePolygon
 	Copy() CollidablePolygon
