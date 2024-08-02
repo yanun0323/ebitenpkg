@@ -11,12 +11,18 @@ type image struct {
 	ctr             controller
 	debugImageCache debugCache
 	img             *ebiten.Image
+	opt             SpiritSheetOption
 }
 
-func NewImage(img sysimage.Image, a ...Align) Image {
+func NewImage(img sysimage.Image, a Align, opt ...SpiritSheetOption) Image {
+	o := _defaultSpiritSheetOption
+	if len(opt) != 0 {
+		o = opt[0]
+	}
 	return &image{
-		ctr: newController(a...),
+		ctr: newController(a),
 		img: ebiten.NewImageFromImage(img),
+		opt: o,
 	}
 }
 
