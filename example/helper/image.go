@@ -8,9 +8,21 @@ import (
 )
 
 func GopherImage() image.Image {
-	f, err := os.Open("./example/helper/gopher.png")
+	return img("gopher")
+}
+
+func PikachuAnimeImage() image.Image {
+	return img("pikachu_anime")
+}
+
+func PikachuSpiritImage() image.Image {
+	return img("pikachu_spirit")
+}
+
+func img(name string) image.Image {
+	f, err := os.Open("./example/helper/" + name + ".png")
 	if err != nil {
-		panic(fmt.Sprintf("read file go.png, err: %+v", err))
+		panic(fmt.Sprintf("read file %s.png, err: %+v", name, err))
 	}
 	defer f.Close()
 

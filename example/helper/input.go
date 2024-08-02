@@ -5,6 +5,8 @@ import (
 	"github.com/yanun0323/ebitenpkg"
 )
 
+const _speed float64 = 2
+
 type InputHandler[T ebitenpkg.Controllable[T]] struct {
 	Object         T
 	MoveUp         bool
@@ -22,15 +24,15 @@ func (i InputHandler[T]) Update(keys []ebiten.Key) {
 		switch in {
 		case ebiten.KeyW:
 			if i.MoveUp {
-				i.Object.Move(0, -5)
+				i.Object.Move(0, -_speed)
 			}
 		case ebiten.KeyS:
 			if i.MoveDown {
-				i.Object.Move(0, 5)
+				i.Object.Move(0, _speed)
 			}
 		case ebiten.KeyA:
 			if i.MoveLeft {
-				i.Object.Move(-5, 0)
+				i.Object.Move(-_speed, 0)
 			}
 			if i.MoveLeftScale {
 				if scaleX, _ := i.Object.Scaled(); scaleX > 0 {
@@ -40,7 +42,7 @@ func (i InputHandler[T]) Update(keys []ebiten.Key) {
 			}
 		case ebiten.KeyD:
 			if i.MoveRight {
-				i.Object.Move(5, 0)
+				i.Object.Move(_speed, 0)
 			}
 			if i.MoveRightScale {
 				if scaleX, _ := i.Object.Scaled(); scaleX < 0 {

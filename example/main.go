@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"runtime"
 
@@ -18,12 +19,18 @@ func main() {
 }
 
 type Game struct {
+	Count        int
 	Space        ebitenpkg.Space
 	Walls        []ebitenpkg.CollidablePolygon
 	Player       ebitenpkg.CollidableImage
 	PlayerWeapon ebitenpkg.CollidablePolygon
 	Opponent     ebitenpkg.CollidableImage
 	GameInfo     ebitenpkg.Text
+
+	PikachuAnime        *ebiten.Image
+	PikachuSpirit       *ebiten.Image
+	PikachuAnimeResult  *ebiten.Image
+	PikachuSpiritResult *ebiten.Image
 }
 
 const (
@@ -37,8 +44,11 @@ func NewGame() ebiten.Game {
 	w, h := ebiten.WindowSize()
 	fW, fH := float64(w), float64(h)
 
-	player := ebitenpkg.NewCollidableImage(space, TypePlayer, helper.GopherImage(), ebitenpkg.AlignBottomCenter).Move(100, 100)
-	weapon := ebitenpkg.NewCollidablePolygon(space, TypePlayer, 100, 30, ebitenpkg.AlignCenter).Move(100, -30).Attach(player)
+	player := ebitenpkg.NewCollidableImage(space, TypePlayer, helper.GopherImage(), ebitenpkg.AlignCenter).Move(100, 100)
+	weapon := ebitenpkg.NewCollidablePolygon(space, TypePlayer, 100, 30, ebitenpkg.AlignCenter).Move(20, 10).Rotate(-30).Attach(player)
+
+	pikachuAnime := ebiten.NewImageFromImage(helper.PikachuAnimeImage())
+	pikachuSpirit := ebiten.NewImageFromImage(helper.PikachuSpiritImage())
 
 	return &Game{
 		Space:        space,
@@ -49,14 +59,25 @@ func NewGame() ebiten.Game {
 			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTopCenter).Move(20, 0),
 			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTopCenter).Move(fW-20, 0),
 		},
-		GameInfo: ebitenpkg.NewText("Hello, World!", 20, ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White),
+		GameInfo:            ebitenpkg.NewText("Hello, World!", 20, ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White),
+		PikachuAnime:        pikachuAnime,
+		PikachuSpirit:       pikachuSpirit,
+		PikachuAnimeResult:  pikachuAnime,
+		PikachuSpiritResult: pikachuSpirit,
 	}
 }
 
 func (g *Game) Update() error {
+	g.Count++
 	g.Space.Update()
 	g.GameInfo.SetText(fmt.Sprintf("TPS: %.2f, FPS: %.2f", ebiten.ActualTPS(), ebiten.ActualFPS()))
 	pressed := inpututil.AppendPressedKeys(nil)
+
+	i := (g.Count / 5 /* second */) % 6
+	w, h := g.PikachuAnime.Bounds().Dx(), g.PikachuAnime.Bounds().Dy()/6
+	sx, sy := 0, h*i
+
+	g.PikachuAnimeResult = g.PikachuAnime.SubImage(image.Rect(sx, sy, sx+w, sy+h)).(*ebiten.Image)
 
 	helper.InputHandler[ebitenpkg.CollidableImage]{
 		Object:         g.Player,
@@ -84,6 +105,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.Opponent.DebugDraw(screen)
 	g.Player.DebugDraw(screen)
 	g.PlayerWeapon.DebugDraw(screen)
+
+	if g.PikachuAnimeResult != nil {
+		screen.DrawImage(g.PikachuAnimeResult, nil)
+	}
 
 	g.GameInfo.Draw(screen)
 	for _, w := range g.Walls {
