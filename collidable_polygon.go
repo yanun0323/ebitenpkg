@@ -6,6 +6,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+var _colorWhite color.Color = color.White
+
 type collidablePolygon struct {
 	w, h   float64
 	ctr    controller
@@ -34,18 +36,13 @@ func NewCollidablePolygon(space Space, bt CollisionType, w, h float64, a ...Alig
 	Drawable
 */
 
-func (cp collidablePolygon) Draw(screen *ebiten.Image) {
-	screen.DrawImage(cp.img.Image(int(cp.w), int(cp.h)), cp.DrawOption())
-}
-
-func (cp *collidablePolygon) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	if len(clr) == 0 && cp.IsCollided() {
-		clr = append(clr, _collidedColor)
+func (cp collidablePolygon) Draw(screen *ebiten.Image, debug ...color.Color) {
+	clr := _colorWhite
+	if len(debug) != 0 && debug[0] != nil {
+		clr = debug[0]
 	}
 
-	screen.DrawImage(cp.img.Image(int(cp.w), int(cp.h), clr...), cp.DrawOption())
-
-	drawVertexesAndBarycenter(screen, cp.ctr, cp.Vertexes())
+	screen.DrawImage(cp.img.Image(int(cp.w), int(cp.h), clr), cp.DrawOption())
 }
 
 /*

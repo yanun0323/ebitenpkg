@@ -101,10 +101,12 @@ func (g *Game) Update() error {
 	return nil
 }
 
+var _debugColor = color.RGBA{G: 255, A: 255}
+
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.Opponent.DebugDraw(screen)
-	g.Player.DebugDraw(screen)
-	g.PlayerWeapon.DebugDraw(screen)
+	g.Opponent.Draw(screen, _debugColor)
+	g.Player.Draw(screen, _debugColor)
+	g.PlayerWeapon.Draw(screen, _debugColor)
 
 	if g.PikachuAnimeResult != nil {
 		screen.DrawImage(g.PikachuAnimeResult, nil)
@@ -112,7 +114,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	g.GameInfo.Draw(screen)
 	for _, w := range g.Walls {
-		w.DebugDraw(screen)
+		w.Draw(screen, _debugColor)
 	}
 }
 

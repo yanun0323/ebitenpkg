@@ -8,8 +8,7 @@ import (
 
 type Drawable interface {
 	// Draw is an alias to screen.DrawImage(img.Image(), img.Option())
-	Draw(screen *ebiten.Image)
-	DebugDraw(screen *ebiten.Image, clr ...color.Color)
+	Draw(screen *ebiten.Image, debug ...color.Color)
 }
 
 type Attachable interface {

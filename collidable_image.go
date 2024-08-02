@@ -31,20 +31,6 @@ func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a ...
 }
 
 /*
-	Drawable
-*/
-
-func (ci collidableImage) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
-	if len(clr) == 0 && ci.IsCollided() {
-		clr = append(clr, _collidedColor)
-	}
-
-	ci.image.DebugDraw(screen, clr...)
-
-	drawVertexesAndBarycenter(screen, ci.ctr, ci.Vertexes())
-}
-
-/*
 	Controllable
 */
 

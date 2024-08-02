@@ -10,39 +10,28 @@ import (
 var _defaultDebugColor color.Color = color.RGBA{G: 100, A: 100}
 
 type debugCache struct {
-	defaultDebugImage *ebiten.Image
-	cachedImage       *ebiten.Image
-	debugColor        color.Color
+	cachedImage *ebiten.Image
+	debugColor  color.Color
 }
 
-func (f *debugCache) Image(w, h int, clr ...color.Color) *ebiten.Image {
+func (f *debugCache) Image(w, h int, clr color.Color) *ebiten.Image {
 	if f.debugColor == nil {
 		f.debugColor = _defaultDebugColor
 	}
 
-	if len(clr) != 0 {
-		if f.cachedImage == nil || !isColorEqual(f.debugColor, clr[0]) {
-			f.cachedImage = debugImage(int(w), int(h), clr[0])
-		}
-
-		return f.cachedImage
+	if f.cachedImage == nil || !isColorEqual(f.debugColor, clr) {
+		f.cachedImage = debugImage(int(w), int(h), clr)
 	}
 
-	if f.defaultDebugImage == nil {
-		f.defaultDebugImage = debugImage(int(w), int(h), _defaultDebugColor)
-	}
-
-	return f.defaultDebugImage
+	return f.cachedImage
 }
 
 func (f debugCache) Copy() debugCache {
-	f.defaultDebugImage = nil
 	f.cachedImage = nil
 	return f
 }
 
 func (f *debugCache) Clean() {
-	f.defaultDebugImage = nil
 	f.cachedImage = nil
 }
 

@@ -38,24 +38,19 @@ func NewText(s string, size float64, a ...Align) Text {
 	Drawable
 */
 
-func (t text) Draw(screen *ebiten.Image) {
-	ebitentext.Draw(screen, t.s, t.face, &ebitentext.DrawOptions{
-		DrawImageOptions: *t.DrawOption(),
-		LayoutOptions:    ebitentext.LayoutOptions{LineSpacing: t.lineSpacing},
-	})
-}
-
-func (t text) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+func (t text) Draw(screen *ebiten.Image, debug ...color.Color) {
 	w, h := t.Bounds()
-	opt := getDrawOption(w, h, t.ctr)
-	debugImage := t.debugImageCache.Image(int(w), int(h), clr...)
+	opt := t.DrawOption()
 
 	ebitentext.Draw(screen, t.s, t.face, &ebitentext.DrawOptions{
 		DrawImageOptions: *opt,
 		LayoutOptions:    ebitentext.LayoutOptions{LineSpacing: t.lineSpacing},
 	})
 
-	screen.DrawImage(debugImage, opt)
+	if len(debug) != 0 && debug[0] != nil {
+		debugImage := t.debugImageCache.Image(int(w), int(h), debug[0])
+		screen.DrawImage(debugImage, opt)
+	}
 }
 
 /*

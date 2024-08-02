@@ -30,15 +30,15 @@ func NewImage(img sysimage.Image, a Align, opt ...SpiritSheetOption) Image {
 	Drawable
 */
 
-func (im image) Draw(screen *ebiten.Image) {
-	screen.DrawImage(im.img, im.DrawOption())
-}
-
-func (im image) DebugDraw(screen *ebiten.Image, clr ...color.Color) {
+func (im image) Draw(screen *ebiten.Image, debug ...color.Color) {
 	opt := im.DrawOption()
-	debugImg := im.debugImageCache.Image(im.img.Bounds().Dx(), im.img.Bounds().Dy(), clr...)
 	screen.DrawImage(im.img, opt)
-	screen.DrawImage(debugImg, opt)
+	screen.DrawImage(im.img, opt)
+
+	if len(debug) != 0 && debug[0] != nil {
+		debugImg := im.debugImageCache.Image(im.img.Bounds().Dx(), im.img.Bounds().Dy(), debug[0])
+		screen.DrawImage(debugImg, opt)
+	}
 }
 
 /*
