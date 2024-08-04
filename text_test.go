@@ -6,7 +6,7 @@ import (
 
 func TestTextSize(t *testing.T) {
 	size := 50.0
-	text := NewText("Helloooo", size)
+	text := NewText("Helloooo", size, AlignTopLeading)
 
 	t.Log(text.Bounds())
 

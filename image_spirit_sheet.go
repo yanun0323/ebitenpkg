@@ -1,5 +1,5 @@
 package ebitenpkg
 
-var _defaultSpiritSheetOption = SpiritSheetOption{}
+import sysimage "image"
 
-type SpiritSheetOption struct{}
+type SpiritSheetOption func(moveX, moveY float64, imgWidth, imgHeight int, side, currentSecond int) sysimage.Rectangle

@@ -13,16 +13,11 @@ type controller struct {
 	align    Align
 }
 
-func newController(a ...Align) controller {
-	align := AlignTopLeading
-	if len(a) != 0 {
-		align = a[0]
-	}
-
+func newController(a Align) controller {
 	return controller{
 		movement: Vector{X: 0, Y: 0},
 		scale:    Vector{X: 1, Y: 1},
-		align:    align,
+		align:    a,
 	}
 }
 

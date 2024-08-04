@@ -15,10 +15,11 @@ type image struct {
 }
 
 func NewImage(img sysimage.Image, a Align, opt ...SpiritSheetOption) Image {
-	o := _defaultSpiritSheetOption
+	var o SpiritSheetOption
 	if len(opt) != 0 {
 		o = opt[0]
 	}
+
 	return &image{
 		ctr: newController(a),
 		img: ebiten.NewImageFromImage(img),

@@ -14,11 +14,17 @@ type collidableImage struct {
 	space  Space
 }
 
-func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a ...Align) CollidableImage {
+func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a Align, opt ...SpiritSheetOption) CollidableImage {
+	var o SpiritSheetOption
+	if len(opt) != 0 {
+		o = opt[0]
+	}
+
 	obj := &collidableImage{
 		image: image{
-			ctr: newController(a...),
+			ctr: newController(a),
 			img: ebiten.NewImageFromImage(img),
+			opt: o,
 		},
 		parent: nil,
 		cd:     newCollider(bt),

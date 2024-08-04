@@ -101,7 +101,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
-var _debugColor = color.RGBA{G: 255, A: 255}
+var _debugColor = color.RGBA{G: 100, A: 100}
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.Opponent.Draw(screen, _debugColor)

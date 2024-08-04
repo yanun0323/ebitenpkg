@@ -24,9 +24,9 @@ type text struct {
 	lineSpacing     float64
 }
 
-func NewText(s string, size float64, a ...Align) Text {
+func NewText(s string, size float64, a Align) Text {
 	return &text{
-		ctr:   newController(a...),
+		ctr:   newController(a),
 		s:     s,
 		size:  size,
 		face:  text{}.newFace(size),

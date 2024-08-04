@@ -17,11 +17,11 @@ type collidablePolygon struct {
 	img    debugCache
 }
 
-func NewCollidablePolygon(space Space, bt CollisionType, w, h float64, a ...Align) CollidablePolygon {
+func NewCollidablePolygon(space Space, bt CollisionType, w, h float64, a Align) CollidablePolygon {
 	obj := &collidablePolygon{
 		w:      w,
 		h:      h,
-		ctr:    newController(a...),
+		ctr:    newController(a),
 		parent: nil,
 		cd:     newCollider(bt),
 		space:  space,
