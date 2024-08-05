@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/google/uuid"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 )
 
 const (
@@ -50,12 +51,10 @@ func CurrentGameTime() int {
 }
 
 /*
-	DefaultAlign
+	Default Align
 */
 
-var (
-	_defaultAlignValue = newValue(AlignCenter)
-)
+var _defaultAlignValue = newValue(AlignCenter)
 
 func SetDefaultAlign(align Align) Align {
 	_defaultAlignValue.Store(align)
@@ -67,12 +66,10 @@ func DefaultAlign() Align {
 }
 
 /*
-	DefaultTextDpi
+	Default Text Dpi
 */
 
-var (
-	_defaultTextDpi = newValue(72.0)
-)
+var _defaultTextDpi = newValue(72.0)
 
 func SetDefaultTextDpi(dpi float64) {
 	_defaultTextDpi.Store(dpi)
@@ -83,12 +80,10 @@ func DefaultTextDpi() float64 {
 }
 
 /*
-	DefaultDebugColor
+	Default Debug Color
 */
 
-var (
-	_defaultDebugColor = newValue(color.RGBA{G: 100, A: 100})
-)
+var _defaultDebugColor = newValue(color.RGBA{G: 100, A: 100})
 
 func SetDefaultDebugColor(color color.Color) {
 	_defaultDebugColor.Store(color)
@@ -96,4 +91,18 @@ func SetDefaultDebugColor(color color.Color) {
 
 func DefaultDebugColor() color.Color {
 	return _defaultDebugColor.Load().(color.Color)
+}
+
+/*
+	Default Font
+*/
+
+var _defaultFont = newValue(fonts.MPlus1pRegular_ttf)
+
+func SetDefaultFont(font []byte) {
+	_defaultFont.Store(font)
+}
+
+func DefaultFont() []byte {
+	return _defaultFont.Load().([]byte)
 }

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"runtime"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -120,7 +118,7 @@ func NewGame() ebiten.Game {
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(20, 0).Collidable(space, TypeWall).Debug(true),
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(fW-20, 0).Collidable(space, TypeWall).Debug(true),
 		},
-		GameInfo:           ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.RGBA{R: 100, G: 100, B: 100, A: 100}).Debug(true),
+		GameInfo:           ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.RGBA{R: 100, G: 100, B: 100, A: 100}).SetLineSpacing(50).Debug(true),
 		PikachuAnime:       pikachuAnime,
 		pikachuAnimeImg:    pikachuAnimeImg,
 		PikachuAnimeResult: pikachuAnime,
@@ -174,15 +172,15 @@ func (g *Game) Update() error {
 	// 	MoveRightScale: true,
 	// }.Update(pressed)
 
-	ms := runtime.MemStats{}
-	runtime.ReadMemStats(&ms)
+	// ms := runtime.MemStats{}
+	// runtime.ReadMemStats(&ms)
 
-	ts := time.Now().UnixNano() - int64(g.LastGC)
-	println("alloc", ms.Alloc/1024, "kb", ts/1e6, "ms")
-	if g.LastGC != ms.LastGC {
-		g.LastGC = ms.LastGC
-		println("GC!!!!")
-	}
+	// ts := time.Now().UnixNano() - int64(g.LastGC)
+	// println("alloc", ms.Alloc/1024, "kb", ts/1e6, "ms")
+	// if g.LastGC != ms.LastGC {
+	// 	g.LastGC = ms.LastGC
+	// 	println("GC!!!!")
+	// }
 
 	// runtime.GC()
 	return nil

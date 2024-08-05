@@ -5,7 +5,6 @@ import (
 	"sync/atomic"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
@@ -69,7 +68,7 @@ func (e *eText) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, e.Text(), e.Face(), &text.DrawOptions{
 		DrawImageOptions: *opt,
-		LayoutOptions:    text.LayoutOptions{LineSpacing: e.LineSpacing()},
+		LayoutOptions:    text.LayoutOptions{LineSpacing: 100},
 	})
 
 	if e.debug != nil {
@@ -219,7 +218,7 @@ func newFace(size float64) text.Face {
 		Hinting: font.HintingNone,
 	}
 
-	ff, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
+	ff, err := opentype.Parse(DefaultFont())
 	if err != nil {
 		return text.NewGoXFace(nil)
 	}
