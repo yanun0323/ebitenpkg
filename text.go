@@ -107,7 +107,7 @@ func (e *eText) Detach() (parent Attachable) {
 }
 
 func (e *eText) Debug(on ...bool) Text {
-	if len(on) == 0 || !on[0] {
+	if len(on) != 0 && !on[0] {
 		e.debug = nil
 		return e
 	}

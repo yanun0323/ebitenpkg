@@ -152,7 +152,7 @@ func (e *eImage) Collidable(space Space, group int) Image {
 }
 
 func (e *eImage) Debug(on ...bool) Image {
-	if len(on) == 0 || !on[0] {
+	if len(on) != 0 && !on[0] {
 		e.debug = nil
 		return e
 	}
