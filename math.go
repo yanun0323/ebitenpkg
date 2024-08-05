@@ -141,7 +141,7 @@ func getVertexes(w, h float64, ctr Attachable, pr ...Attachable) []Vector {
 	return result
 }
 
-func getDrawOption(w, h int, current controller, pr ...Attachable) *ebiten.DrawImageOptions {
+func getDrawOption(w, h int, current controller, tempScaleX, tempScaleY float64, pr ...Attachable) *ebiten.DrawImageOptions {
 	mX, mY := current.GetMove()
 	oX, oY := current.GetAlign().barycenterOffset(float64(w), float64(h))
 	sX, sY := current.GetScale()
@@ -149,6 +149,7 @@ func getDrawOption(w, h int, current controller, pr ...Attachable) *ebiten.DrawI
 	opt := &ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(-oX, -oY)
 	opt.GeoM.Scale(sX, sY)
+	opt.GeoM.Scale(tempScaleX, tempScaleY)
 	opt.GeoM.Rotate(current.GetRotate() / _radianToDegree)
 
 	if len(pr) != 0 && pr[0] != nil {

@@ -5,7 +5,7 @@ import (
 	"github.com/yanun0323/ebitenpkg"
 )
 
-const _speed float64 = 2
+const _speed float64 = 5
 
 type InputHandler[T ebitenpkg.Image] struct {
 	Object         T

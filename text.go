@@ -112,6 +112,10 @@ func (e *eText) Debug(on ...bool) Text {
 		return e
 	}
 
+	if e.debug != nil {
+		return e
+	}
+
 	w, h := e.Bounds()
 	img := ebiten.NewImage(w, h)
 	img.Fill(DefaultDebugColor())
@@ -121,22 +125,38 @@ func (e *eText) Debug(on ...bool) Text {
 
 func (e *eText) SetText(text string) Text {
 	e.text.Store(text)
+	if e.debug != nil {
+		e.debug = nil
+		e.Debug()
+	}
+
 	return e
 }
 
 func (e *eText) SetSize(size float64) Text {
 	e.size.Store(size)
 	e.face.Store(newFace(size))
+	if e.debug != nil {
+		e.debug = nil
+		e.Debug()
+	}
+
 	return e
 }
 
 func (e *eText) SetColor(color color.Color) Text {
 	e.color.Store(color)
+
 	return e
 }
 
 func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 	e.lineSpacing.Store(lineSpacing)
+	if e.debug != nil {
+		e.debug = nil
+		e.Debug()
+	}
+
 	return e
 }
 
@@ -187,7 +207,7 @@ func (e eText) LineSpacing() float64 {
 
 func (e eText) DrawOption() *ebiten.DrawImageOptions {
 	w, h := e.Bounds()
-	return getDrawOption(w, h, e.controller, e.parent)
+	return getDrawOption(w, h, e.controller, 1, 1, e.parent)
 }
 
 func newFace(size float64) text.Face {

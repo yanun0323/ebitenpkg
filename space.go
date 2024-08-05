@@ -4,10 +4,10 @@ import "sync"
 
 type Space interface {
 	GameUpdate()
-	AddBody(c Collidable) Space
-	RemoveBody(id ID) Space
-	IsCollided(id ID) bool
-	GetCollided(id ID) []Collidable
+	AddBody(Collidable) Space
+	RemoveBody(Collidable) Space
+	IsCollided(Collidable) bool
+	GetCollided(Collidable) []Collidable
 }
 
 type Collidable interface {
@@ -61,41 +61,41 @@ func (s *space) GameUpdate() {
 	s.collided = collided
 }
 
-func (s *space) getVertexes(b Collidable) []Vector {
-	w, h := b.Bounds()
-	return getVertexes(float64(w), float64(h), b, b.Parent())
+func (s *space) getVertexes(c Collidable) []Vector {
+	w, h := c.Bounds()
+	return getVertexes(float64(w), float64(h), c, c.Parent())
 }
 
-func (s *space) AddBody(b Collidable) Space {
+func (s *space) AddBody(c Collidable) Space {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.bodies[b.CollisionID()] = b
+	s.bodies[c.CollisionID()] = c
 	return s
 }
 
-func (s *space) RemoveBody(id ID) Space {
+func (s *space) RemoveBody(c Collidable) Space {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.bodies, id)
+	delete(s.bodies, c.CollisionID())
 	return s
 }
 
-func (s *space) IsCollided(id ID) bool {
+func (s *space) IsCollided(c Collidable) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return len(s.collided) != 0 && len(s.collided[id]) != 0
+	return len(s.collided) != 0 && len(s.collided[c.CollisionID()]) != 0
 }
 
-func (s *space) GetCollided(id ID) []Collidable {
+func (s *space) GetCollided(c Collidable) []Collidable {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	c := s.collided[id]
-	result := make([]Collidable, len(c))
+	cs := s.collided[c.CollisionID()]
+	result := make([]Collidable, len(cs))
 
-	copy(result, c)
+	copy(result, cs)
 
 	return result
 }

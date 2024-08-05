@@ -1,7 +1,6 @@
 package ebitenpkg
 
 import (
-	"fmt"
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -27,15 +26,16 @@ type Image interface {
 	Rotated() (angle float64)
 	Debugged() bool
 	SpriteSheet() (SpriteSheetOption, bool)
-	IsCollidable() bool
+
 	CollisionID() ID
 	CollisionGroup() int
+	Parent() Attachable
 }
 
 type SpriteSheetOption struct {
 	SpriteWidthCount  int
 	SpriteHeightCount int
-	SpriteHandler     func(fps, timestamp int, direction Direction) (indexX, indexY int)
+	SpriteHandler     func(fps, timestamp int, direction Direction) (indexX, indexY, scaleX, scaleY int)
 }
 
 func NewImage(img image.Image) Image {
@@ -52,11 +52,12 @@ type eImage struct {
 	controller
 	id ID
 
-	image        *ebiten.Image
-	imageWidth   int
-	imageHeight  int
-	draw         *ebiten.Image
-	drawX, drawY int
+	image          *ebiten.Image
+	imageWidth     int
+	imageHeight    int
+	draw           *ebiten.Image
+	drawX, drawY   int
+	drawSX, drawSY int
 
 	spriteOption SpriteSheetOption
 
@@ -71,7 +72,7 @@ type eImage struct {
 func (e *eImage) Draw(screen *ebiten.Image) {
 
 	if e.spriteOption.SpriteHandler == nil {
-		option := getDrawOption(e.imageWidth, e.imageHeight, e.controller, e.parent)
+		option := getDrawOption(e.imageWidth, e.imageHeight, e.controller, 1, 1, e.parent)
 		screen.DrawImage(e.image, option)
 
 		if e.debug != nil {
@@ -81,24 +82,26 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	}
 
 	sW, sH := e.Bounds()
-	option := getDrawOption(sW, sH, e.controller, e.parent)
-	x, y := e.spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
-	if x >= 0 && y >= 0 && (e.draw == nil || x != e.drawX || y != e.drawY) {
-		fmt.Printf("sW: %d, sH: %d\n", sW, sH)
-		oX, oY := x*sW, y*sH+e.drawY
+	x, y, sX, sY := e.spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
+	if x >= 0 && y >= 0 {
+		if e.draw == nil || x != e.drawX || y != e.drawY || sX != e.drawSX || sY != e.drawSY {
+			oX, oY := x*sW, y*sH
 
-		rect := image.Rect(oX, oY, oX+sW, oY+sH)
-		fmt.Printf("%+v\n", rect)
-		e.draw = e.image.SubImage(rect).(*ebiten.Image)
+			rect := image.Rect(oX, oY, oX+sW, oY+sH)
+			e.draw = e.image.SubImage(rect).(*ebiten.Image)
+		}
+
+		e.drawX, e.drawY = x, y
+		e.drawSX, e.drawSY = sX, sY
 	}
 
+	option := getDrawOption(sW, sH, e.controller, float64(sX), float64(sY), e.parent)
+
 	if e.draw != nil {
-		println("draw draw")
 		screen.DrawImage(e.draw, option)
 	}
 
 	if e.debug != nil {
-		println("draw debug")
 		screen.DrawImage(e.debug, option)
 	}
 }
@@ -141,7 +144,7 @@ func (e *eImage) Detach() (parent Attachable) {
 
 func (e *eImage) Collidable(space Space, group int) Image {
 	if e.collisionSpace != nil {
-		e.collisionSpace.RemoveBody(e.CollisionID())
+		e.collisionSpace.RemoveBody(e)
 	}
 
 	e.collisionSpace = space.AddBody(e)
@@ -152,6 +155,10 @@ func (e *eImage) Collidable(space Space, group int) Image {
 func (e *eImage) Debug(on ...bool) Image {
 	if len(on) == 0 || !on[0] {
 		e.debug = nil
+		return e
+	}
+
+	if e.debug != nil {
 		return e
 	}
 
@@ -192,10 +199,6 @@ func (e eImage) Debugged() bool {
 
 func (e eImage) SpriteSheet() (SpriteSheetOption, bool) {
 	return e.spriteOption, e.spriteOption.SpriteHandler != nil
-}
-
-func (e eImage) IsCollidable() bool {
-	return e.collisionSpace != nil
 }
 
 func (e eImage) CollisionID() ID {

@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"runtime"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -19,9 +20,11 @@ func main() {
 }
 
 type Game struct {
+	LastGC       uint64
 	Count        int
 	Space        ebitenpkg.Space
 	Walls        []ebitenpkg.Image
+	PlayerSprite ebitenpkg.Image
 	Player       ebitenpkg.Image
 	PlayerWeapon ebitenpkg.Image
 	Opponent     ebitenpkg.Image
@@ -52,6 +55,40 @@ func NewGame() ebiten.Game {
 		Collidable(space, TypePlayer).
 		Debug(true)
 
+	playerSprite := ebitenpkg.
+		NewImage(helper.PikachuSpriteImage()).
+		Align(ebitenpkg.AlignCenter).
+		Move(400, 400).
+		Scale(5, 5).
+		Collidable(space, TypePlayer).
+		Spriteable(ebitenpkg.SpriteSheetOption{
+			SpriteWidthCount:  1,
+			SpriteHeightCount: 6,
+			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY, scaleX, scaleY int) {
+				x, y := 0, (timestamp/5)%2
+				sX, sY := 1, 1
+
+				switch {
+				case direction&ebitenpkg.DirectionUp != 0:
+					y += 2
+				case direction&ebitenpkg.DirectionDown != 0:
+					y += 4
+				case direction&ebitenpkg.DirectionRight != 0:
+					sX = -1
+				}
+
+				return x, y, sX, sY
+			},
+		})
+
+	playerName := ebitenpkg.NewText("Pikachu", 20).
+		Align(ebitenpkg.AlignTop).
+		Move(50, 0).
+		SetColor(color.White).
+		Attach(playerSprite)
+
+	_ = playerName
+
 	weapon := ebitenpkg.NewImage(ebiten.NewImage(100, 30)).
 		Align(ebitenpkg.AlignCenter).
 		Move(20, 10).Rotate(-30).Attach(player).
@@ -67,16 +104,15 @@ func NewGame() ebiten.Game {
 		Spriteable(ebitenpkg.SpriteSheetOption{
 			SpriteWidthCount:  1,
 			SpriteHeightCount: 6,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY int) {
-				return 0, (timestamp / 5) % 6
+			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY, scaleX, scaleY int) {
+				return 0, (timestamp / 5) % 6, 1, 1
 			},
 		}).
 		Debug()
 
-	pikachuSprite := ebiten.NewImageFromImage(helper.PikachuSpriteImage())
-
 	return &Game{
 		Space:        space,
+		PlayerSprite: playerSprite,
 		Player:       player,
 		PlayerWeapon: weapon,
 		Opponent:     ebitenpkg.NewImage(helper.GopherImage()).Align(ebitenpkg.AlignTop).Move(200, 200).Scale(-1, 1).Collidable(space, TypeOpponent).Debug(true),
@@ -84,12 +120,10 @@ func NewGame() ebiten.Game {
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(20, 0).Collidable(space, TypeWall).Debug(true),
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(fW-20, 0).Collidable(space, TypeWall).Debug(true),
 		},
-		GameInfo:            ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White).Debug(true),
-		PikachuAnime:        pikachuAnime,
-		pikachuAnimeImg:     pikachuAnimeImg,
-		PikachuSprite:       pikachuSprite,
-		PikachuAnimeResult:  pikachuAnime,
-		PikachuSpriteResult: pikachuSprite,
+		GameInfo:           ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White).Debug(true),
+		PikachuAnime:       pikachuAnime,
+		pikachuAnimeImg:    pikachuAnimeImg,
+		PikachuAnimeResult: pikachuAnime,
 	}
 }
 
@@ -106,25 +140,51 @@ func (g *Game) Update() error {
 
 	g.PikachuAnimeResult = g.PikachuAnime.SubImage(image.Rect(sx, sy, sx+w, sy+h)).(*ebiten.Image)
 
+	g.Player.Debug(g.Space.IsCollided(g.Player))
+	g.PlayerWeapon.Debug(g.Space.IsCollided(g.PlayerWeapon))
+	g.Opponent.Debug(g.Space.IsCollided(g.Opponent))
+
 	helper.InputHandler[ebitenpkg.Image]{
-		Object:         g.Player,
+		Object:         g.PlayerSprite,
 		MoveUp:         true,
 		MoveDown:       true,
 		MoveLeft:       true,
-		MoveLeftScale:  true,
+		MoveLeftScale:  false,
 		MoveRight:      true,
-		MoveRightScale: true,
+		MoveRightScale: false,
 		RotateLeft:     true,
 		RotateRight:    true,
 	}.Update(pressed)
 
-	helper.InputHandler[ebitenpkg.Image]{
-		Object:         g.PlayerWeapon,
-		MoveLeftScale:  true,
-		MoveRightScale: true,
-	}.Update(pressed)
+	// helper.InputHandler[ebitenpkg.Image]{
+	// 	Object:         g.Player,
+	// 	MoveUp:         true,
+	// 	MoveDown:       true,
+	// 	MoveLeft:       true,
+	// 	MoveLeftScale:  true,
+	// 	MoveRight:      true,
+	// 	MoveRightScale: true,
+	// 	RotateLeft:     true,
+	// 	RotateRight:    true,
+	// }.Update(pressed)
 
-	runtime.GC()
+	// helper.InputHandler[ebitenpkg.Image]{
+	// 	Object:         g.PlayerWeapon,
+	// 	MoveLeftScale:  true,
+	// 	MoveRightScale: true,
+	// }.Update(pressed)
+
+	ms := runtime.MemStats{}
+	runtime.ReadMemStats(&ms)
+
+	ts := time.Now().UnixNano() - int64(g.LastGC)
+	println("alloc", ms.Alloc/1024, "kb", ts/1e6, "ms")
+	if g.LastGC != ms.LastGC {
+		g.LastGC = ms.LastGC
+		println("GC!!!!")
+	}
+
+	// runtime.GC()
 	return nil
 }
 
@@ -134,6 +194,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.Opponent.Draw(screen)
 	g.Player.Draw(screen)
 	g.PlayerWeapon.Draw(screen)
+
+	g.PlayerSprite.Draw(screen)
 
 	g.pikachuAnimeImg.Draw(screen)
 
