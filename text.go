@@ -213,7 +213,7 @@ func (e eText) DrawOption() *ebiten.DrawImageOptions {
 func newFace(size float64) text.Face {
 	opt := &opentype.FaceOptions{
 		Size:    size,
-		DPI:     float64(DefaultTextDpi()),
+		DPI:     DefaultTextDpi(),
 		Hinting: font.HintingNone,
 	}
 
