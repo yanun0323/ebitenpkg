@@ -36,7 +36,7 @@ var _barycenter = alignHelper[func(w, h float64) (x, y float64)]{
 	BottomTrailing: func(w, h float64) (x, y float64) { return w, h },
 }
 
-type Align int
+type Align int8
 
 const (
 	/*
@@ -45,23 +45,31 @@ const (
 			□■□
 			□□□
 	*/
-	AlignCenter Align = iota
+	AlignCenter Align = 0
 
 	/*
-		AlignTopCenter
+		AlignTop
 			□■□
 			□□□
 			□□□
 	*/
-	AlignTopCenter
+	AlignTop Align = 1 << 1
 
 	/*
-		AlignBottomCenter
+		AlignTrailing
+			□□□
+			□□■
+			□□□
+	*/
+	AlignTrailing Align = 1 << 2
+
+	/*
+		AlignBottom
 			□□□
 			□□□
 			□■□
 	*/
-	AlignBottomCenter
+	AlignBottom Align = 1 << 3
 
 	/*
 		AlignLeading
@@ -69,7 +77,7 @@ const (
 			■□□
 			□□□
 	*/
-	AlignLeading
+	AlignLeading Align = 1 << 4
 
 	/*
 		AlignTopLeading
@@ -77,7 +85,7 @@ const (
 			□□□
 			□□□
 	*/
-	AlignTopLeading
+	AlignTopLeading Align = AlignTop | AlignLeading
 
 	/*
 		AlignBottomLeading
@@ -85,28 +93,21 @@ const (
 			□□□
 			■□□
 	*/
-	AlignBottomLeading
-	/*
-		AlignTrailing
-			□□□
-			□□■
-			□□□
-	*/
-	AlignTrailing
+	AlignBottomLeading Align = AlignBottom | AlignLeading
 	/*
 		AlignTopTrailing
 			□□■
 			□□□
 			□□□
 	*/
-	AlignTopTrailing
+	AlignTopTrailing Align = AlignTop | AlignTrailing
 	/*
 		AlignBottomTrailing
 			□□□
 			□□□
 			□□■
 	*/
-	AlignBottomTrailing
+	AlignBottomTrailing Align = AlignBottom | AlignTrailing
 )
 
 func (a Align) String() string {
@@ -142,8 +143,8 @@ type alignHelper[T any] struct {
 
 func (h alignHelper[T]) Execute(f func(Align, T)) {
 	f(AlignCenter, h.Center)
-	f(AlignTopCenter, h.TopCenter)
-	f(AlignBottomCenter, h.BottomCenter)
+	f(AlignTop, h.TopCenter)
+	f(AlignBottom, h.BottomCenter)
 	f(AlignLeading, h.Leading)
 	f(AlignTopLeading, h.TopLeading)
 	f(AlignBottomLeading, h.BottomLeading)
@@ -156,9 +157,9 @@ func (h alignHelper[T]) Switch(a Align) T {
 	switch a {
 	case AlignCenter:
 		return h.Center
-	case AlignTopCenter:
+	case AlignTop:
 		return h.TopCenter
-	case AlignBottomCenter:
+	case AlignBottom:
 		return h.BottomCenter
 	case AlignLeading:
 		return h.Leading

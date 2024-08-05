@@ -54,10 +54,10 @@ func NewGame() ebiten.Game {
 		Space:        space,
 		Player:       player,
 		PlayerWeapon: weapon,
-		Opponent:     ebitenpkg.NewCollidableImage(space, TypeOpponent, helper.GopherImage(), ebitenpkg.AlignTopCenter).Move(200, 200).Scale(-1, 1),
+		Opponent:     ebitenpkg.NewCollidableImage(space, TypeOpponent, helper.GopherImage(), ebitenpkg.AlignTop).Move(200, 200).Scale(-1, 1),
 		Walls: []ebitenpkg.CollidablePolygon{
-			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTopCenter).Move(20, 0),
-			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTopCenter).Move(fW-20, 0),
+			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTop).Move(20, 0),
+			ebitenpkg.NewCollidablePolygon(space, TypeWall, 10, fH, ebitenpkg.AlignTop).Move(fW-20, 0),
 		},
 		GameInfo:            ebitenpkg.NewText("Hello, World!", 20, ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White),
 		PikachuAnime:        pikachuAnime,
