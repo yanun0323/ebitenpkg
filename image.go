@@ -70,7 +70,6 @@ type eImage struct {
 }
 
 func (e *eImage) Draw(screen *ebiten.Image) {
-
 	if e.spriteOption.SpriteHandler == nil {
 		option := getDrawOption(e.imageWidth, e.imageHeight, e.controller, 1, 1, e.parent)
 		screen.DrawImage(e.image, option)
