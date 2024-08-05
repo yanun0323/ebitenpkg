@@ -11,8 +11,11 @@ type Image interface {
 
 	Align(align Align) Image
 	Move(x, y float64, replace ...bool) Image
+	Moving(x, y float64, tick int, replace ...bool) Image
 	Scale(x, y float64, replace ...bool) Image
+	Scaling(x, y float64, tick int, replace ...bool) Image
 	Rotate(angle float64, replace ...bool) Image
+	Rotating(angle float64, tick int, replace ...bool) Image
 	Spriteable(SpriteSheetOption) Image
 	Attach(parent Attachable) Image
 	Detach() (parent Attachable)
@@ -115,13 +118,28 @@ func (e *eImage) Move(x, y float64, replace ...bool) Image {
 	return e
 }
 
+func (e *eImage) Moving(x, y float64, tick int, replace ...bool) Image {
+	e.controller.SetMoving(x, y, tick, replace...)
+	return e
+}
+
 func (e *eImage) Scale(x, y float64, replace ...bool) Image {
 	e.controller.SetScale(x, y, replace...)
 	return e
 }
 
+func (e *eImage) Scaling(x, y float64, tick int, replace ...bool) Image {
+	e.controller.SetScaling(x, y, tick, replace...)
+	return e
+}
+
 func (e *eImage) Rotate(angle float64, replace ...bool) Image {
 	e.controller.SetRotate(angle, replace...)
+	return e
+}
+
+func (e *eImage) Rotating(angle float64, tick int, replace ...bool) Image {
+	e.controller.SetRotating(angle, tick, replace...)
 	return e
 }
 
