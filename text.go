@@ -65,6 +65,7 @@ type eText struct {
 
 func (e *eText) Draw(screen *ebiten.Image) {
 	opt := e.DrawOption()
+	opt.ColorScale.ScaleWithColor(e.Color())
 
 	text.Draw(screen, e.Text(), e.Face(), &text.DrawOptions{
 		DrawImageOptions: *opt,
