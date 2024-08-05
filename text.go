@@ -45,7 +45,7 @@ func NewText(text string, size float64) Text {
 		text:        newValue(text),
 		size:        newValue(size),
 		face:        newValue(newFace(size)),
-		color:       newValue(color.Black),
+		color:       newValue(color.RGBA64{}),
 		lineSpacing: newValue(0.0),
 	}
 }
@@ -145,8 +145,9 @@ func (e *eText) SetSize(size float64) Text {
 	return e
 }
 
-func (e *eText) SetColor(color color.Color) Text {
-	e.color.Store(color)
+func (e *eText) SetColor(clr color.Color) Text {
+	r, g, b, a := clr.RGBA()
+	e.color.Store(color.RGBA64{uint16(r), uint16(g), uint16(b), uint16(a)})
 
 	return e
 }

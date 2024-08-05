@@ -120,7 +120,7 @@ func NewGame() ebiten.Game {
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(20, 0).Collidable(space, TypeWall).Debug(true),
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(fW-20, 0).Collidable(space, TypeWall).Debug(true),
 		},
-		GameInfo:           ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White).Debug(true),
+		GameInfo:           ebitenpkg.NewText("Hello, World!", 20).Align(ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.RGBA{R: 100, G: 100, B: 100, A: 100}).Debug(true),
 		PikachuAnime:       pikachuAnime,
 		pikachuAnimeImg:    pikachuAnimeImg,
 		PikachuAnimeResult: pikachuAnime,
