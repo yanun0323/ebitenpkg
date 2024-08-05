@@ -8,7 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/yanun0323/ebitenpkg"
+	"github.com/yanun0323/ebitenpkg/v0"
 	"github.com/yanun0323/ebitenpkg/example/helper"
 )
 

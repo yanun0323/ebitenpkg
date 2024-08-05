@@ -2,7 +2,7 @@ package helper
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/yanun0323/ebitenpkg"
+	"github.com/yanun0323/ebitenpkg/v0"
 )
 
 const _speed float64 = 2
