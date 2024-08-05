@@ -37,6 +37,18 @@ func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a Ali
 }
 
 /*
+	Drawable
+*/
+
+func (ci collidableImage) Draw(screen *ebiten.Image, debug ...color.Color) {
+	if len(debug) != 0 && ci.IsCollided() {
+		debug[0] = _collidedColor
+	}
+
+	ci.image.Draw(screen, debug...)
+}
+
+/*
 	Controllable
 */
 

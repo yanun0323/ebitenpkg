@@ -2,7 +2,6 @@ package ebitenpkg
 
 import (
 	"image/color"
-	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -60,24 +59,24 @@ func isColorEqual(a, b color.Color) bool {
 	return ar == br && ag == bg && ab == bb && aa == ba
 }
 
-var (
-	_centerImage     = ebiten.NewImage(5, 5)
-	_centerBaseImage = ebiten.NewImage(5, 5)
-	_vertexImage     = ebiten.NewImage(3, 3)
-)
+// var (
+// 	_centerImage     = ebiten.NewImage(5, 5)
+// 	_centerBaseImage = ebiten.NewImage(5, 5)
+// 	_vertexImage     = ebiten.NewImage(3, 3)
+// )
 
-func drawVertexesAndBarycenter(screen *ebiten.Image, ctr controller, vertexes []Vector) {
-	sync.OnceFunc(func() {
-		_centerImage.Fill(color.RGBA{R: 255, A: 255})
-		_centerBaseImage.Fill(color.White)
-		_vertexImage.Fill(color.White)
-	})()
+// func drawVertexesAndBarycenter(screen *ebiten.Image, ctr controller, vertexes []Vector) {
+// 	sync.OnceFunc(func() {
+// 		_centerImage.Fill(color.RGBA{R: 255, A: 255})
+// 		_centerBaseImage.Fill(color.White)
+// 		_vertexImage.Fill(color.White)
+// 	})()
 
-	mX, mY := ctr.Moved()
-	// NewImage(_centerBaseImage, AlignCenter).Move(mX, mY).Draw(screen)
-	NewImage(_centerImage, AlignCenter).Move(mX, mY).Draw(screen)
+// 	mX, mY := ctr.Moved()
+// 	// NewImage(_centerBaseImage, AlignCenter).Move(mX, mY).Draw(screen)
+// 	NewImage(_centerImage, AlignCenter).Move(mX, mY).Draw(screen)
 
-	for _, v := range vertexes {
-		NewImage(_vertexImage, AlignCenter).Move(v.X, v.Y).Draw(screen)
-	}
-}
+// 	for _, v := range vertexes {
+// 		NewImage(_vertexImage, AlignCenter).Move(v.X, v.Y).Draw(screen)
+// 	}
+// }

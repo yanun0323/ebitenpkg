@@ -119,6 +119,15 @@ func getVertexes(w, h float64, ctr controller, pr ...parent) []Vector {
 
 	if hasParent {
 		pmX, pmY = pr[0].ctr.Moved()
+
+		psX, psY := pr[0].ctr.Scaled()
+		if psX < 1 {
+			mX = -mX
+		}
+
+		if psY < 1 {
+			mY = -mY
+		}
 	}
 
 	for i, v := range result {
@@ -158,6 +167,15 @@ func getDrawOption(w, h float64, current controller, pr ...parent) *ebiten.DrawI
 	if len(pr) != 0 && pr[0].ctr != nil {
 		pmX, pmY := pr[0].ctr.Moved()
 		opt.GeoM.Translate(pmX, pmY)
+
+		psX, psY := pr[0].ctr.Scaled()
+		if psX < 1 {
+			mX = -mX
+		}
+
+		if psY < 1 {
+			mY = -mY
+		}
 	}
 
 	opt.GeoM.Translate(mX, mY)

@@ -40,6 +40,9 @@ func (cp collidablePolygon) Draw(screen *ebiten.Image, debug ...color.Color) {
 	clr := _colorWhite
 	if len(debug) != 0 && debug[0] != nil {
 		clr = debug[0]
+		if cp.IsCollided() {
+			clr = _collidedColor
+		}
 	}
 
 	screen.DrawImage(cp.img.Image(int(cp.w), int(cp.h), clr), cp.DrawOption())
