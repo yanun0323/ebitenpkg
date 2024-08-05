@@ -2,12 +2,12 @@ package helper
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/yanun0323/ebitenpkg/v0"
+	"github.com/yanun0323/ebitenpkg"
 )
 
 const _speed float64 = 2
 
-type InputHandler[T ebitenpkg.Controllable[T]] struct {
+type InputHandler[T ebitenpkg.Image] struct {
 	Object         T
 	MoveUp         bool
 	MoveDown       bool

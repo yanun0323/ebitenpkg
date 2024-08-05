@@ -3,8 +3,8 @@ package ebitenpkg
 import (
 	"image/color"
 
-	ebitenfonts "github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
+	ebitenfonts "github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	ebitentext "github.com/hajimehoshi/ebiten/v2/text/v2"
 	gofont "golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
