@@ -15,8 +15,8 @@ func PikachuAnimeImage() image.Image {
 	return img("pikachu_anime")
 }
 
-func PikachuSpiritImage() image.Image {
-	return img("pikachu_spirit")
+func PikachuSpriteImage() image.Image {
+	return img("pikachu_sprite")
 }
 
 func img(name string) image.Image {

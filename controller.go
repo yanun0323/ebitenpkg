@@ -6,11 +6,13 @@ import (
 
 var radianToDegree = 180 / math.Pi
 
+// TODO: Thread safety
 type controller struct {
-	movement Vector
-	scale    Vector
-	rotation float64
-	align    Align
+	movement  Vector
+	direction Direction
+	scale     Vector
+	rotation  float64
+	align     Align
 }
 
 func newController(a Align) controller {
@@ -28,8 +30,10 @@ func (ctr *controller) Align(a Align) *controller {
 
 func (ctr *controller) Move(x, y float64, replace ...bool) *controller {
 	if len(replace) != 0 && replace[0] {
+		ctr.direction = newDirectionFrom(ctr.movement.X, ctr.movement.Y, x, y)
 		ctr.movement = Vector{X: x, Y: y}
 	} else {
+		ctr.direction = newDirection(x, y)
 		ctr.movement = Vector{X: ctr.movement.X + x, Y: ctr.movement.Y + y}
 	}
 
@@ -62,6 +66,10 @@ func (ctr controller) Aligned() Align {
 
 func (ctr controller) Moved() (x, y float64) {
 	return ctr.movement.X, ctr.movement.Y
+}
+
+func (ctr controller) Direction() Direction {
+	return ctr.direction
 }
 
 func (ctr controller) Rotated() float64 {

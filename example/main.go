@@ -28,9 +28,9 @@ type Game struct {
 	GameInfo     ebitenpkg.Text
 
 	PikachuAnime        *ebiten.Image
-	PikachuSpirit       *ebiten.Image
+	PikachuSprite       *ebiten.Image
 	PikachuAnimeResult  *ebiten.Image
-	PikachuSpiritResult *ebiten.Image
+	PikachuSpriteResult *ebiten.Image
 }
 
 const (
@@ -48,7 +48,7 @@ func NewGame() ebiten.Game {
 	weapon := ebitenpkg.NewCollidablePolygon(space, TypePlayer, 100, 30, ebitenpkg.AlignCenter).Move(20, 10).Rotate(-30).Attach(player)
 
 	pikachuAnime := ebiten.NewImageFromImage(helper.PikachuAnimeImage())
-	pikachuSpirit := ebiten.NewImageFromImage(helper.PikachuSpiritImage())
+	pikachuSprite := ebiten.NewImageFromImage(helper.PikachuSpriteImage())
 
 	return &Game{
 		Space:        space,
@@ -61,9 +61,9 @@ func NewGame() ebiten.Game {
 		},
 		GameInfo:            ebitenpkg.NewText("Hello, World!", 20, ebitenpkg.AlignTopLeading).Move(10, 0).SetColor(color.White),
 		PikachuAnime:        pikachuAnime,
-		PikachuSpirit:       pikachuSpirit,
+		PikachuSprite:       pikachuSprite,
 		PikachuAnimeResult:  pikachuAnime,
-		PikachuSpiritResult: pikachuSpirit,
+		PikachuSpriteResult: pikachuSprite,
 	}
 }
 

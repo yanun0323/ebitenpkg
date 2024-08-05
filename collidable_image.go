@@ -14,8 +14,8 @@ type collidableImage struct {
 	space  Space
 }
 
-func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a Align, opt ...SpiritSheetOption) CollidableImage {
-	var o SpiritSheetOption
+func NewCollidableImage(space Space, bt CollisionType, img sysimage.Image, a Align, opt ...SpriteSheetOption) CollidableImage {
+	var o SpriteSheetOption
 	if len(opt) != 0 {
 		o = opt[0]
 	}

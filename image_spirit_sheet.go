@@ -6,16 +6,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type SpiritSheetOption func(direction Direction, imgWidth, imgHeight int, currentSecond int) sysimage.Rectangle
+type SpriteSheetOption struct {
+	SpriteWidth  int
+	SpriteHeight int
+	Fn           func(direction Direction, spriteWidth, spriteHeight int, currentSecond int64) sysimage.Rectangle
+}
 
-func (opt *SpiritSheetOption) subImage(img *ebiten.Image, direction Direction, currentSecond int) *ebiten.Image {
-	if opt == nil {
+func (opt SpriteSheetOption) subImage(img *ebiten.Image, direction Direction, currentSecond int64) *ebiten.Image {
+	if opt.Fn == nil {
 		return img
 	}
 
-	fn := *opt
-
-	rect := fn(direction, img.Bounds().Dx(), img.Bounds().Dy(), currentSecond)
+	rect := opt.Fn(direction, img.Bounds().Dx(), img.Bounds().Dy(), currentSecond)
 
 	return img.SubImage(rect).(*ebiten.Image)
 }

@@ -11,11 +11,11 @@ type image struct {
 	ctr             controller
 	debugImageCache debugCache
 	img             *ebiten.Image
-	opt             SpiritSheetOption
+	opt             SpriteSheetOption
 }
 
-func NewImage(img sysimage.Image, a Align, opt ...SpiritSheetOption) Image {
-	var o SpiritSheetOption
+func NewImage(img sysimage.Image, a Align, opt ...SpriteSheetOption) Image {
+	var o SpriteSheetOption
 	if len(opt) != 0 {
 		o = opt[0]
 	}
@@ -33,6 +33,7 @@ func NewImage(img sysimage.Image, a Align, opt ...SpiritSheetOption) Image {
 
 func (im image) Draw(screen *ebiten.Image, debug ...color.Color) {
 	opt := im.DrawOption()
+
 	screen.DrawImage(im.img, opt)
 	screen.DrawImage(im.img, opt)
 
@@ -53,6 +54,7 @@ func (im *image) Align(a Align) Image {
 
 func (im *image) Move(x, y float64, replace ...bool) Image {
 	im.ctr.Move(x, y, replace...)
+
 	return im
 }
 
