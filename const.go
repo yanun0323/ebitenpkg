@@ -36,11 +36,12 @@ var (
 	_currentGameTime     = 0
 )
 
-func GameUpdate() {
+func GameUpdate() int {
 	_currentGameTimeLock.Lock()
 	defer _currentGameTimeLock.Unlock()
 
 	_currentGameTime++
+	return _currentGameTime
 }
 
 func CurrentGameTime() int {
