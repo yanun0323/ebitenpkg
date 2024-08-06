@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"math"
 	"sync"
-	"sync/atomic"
 
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -21,11 +20,11 @@ func newID() ID {
 	return ID(uuid.New())
 }
 
-func newValue(v any) *atomic.Value {
-	value := &atomic.Value{}
-	value.Store(v)
-	return value
-}
+// func newValue(v any) *atomic.Value {
+// 	value := &atomic.Value{}
+// 	value.Store(v)
+// 	return value
+// }
 
 /*
 	Game
@@ -62,7 +61,7 @@ func SetDefaultAlign(align Align) Align {
 }
 
 func DefaultAlign() Align {
-	return _defaultAlignValue.Load().(Align)
+	return _defaultAlignValue.Load()
 }
 
 /*
@@ -76,21 +75,22 @@ func SetDefaultTextDpi(dpi float64) {
 }
 
 func DefaultTextDpi() float64 {
-	return _defaultTextDpi.Load().(float64)
+	return _defaultTextDpi.Load()
 }
 
 /*
 	Default Debug Color
 */
 
-var _defaultDebugColor = newValue(color.RGBA{G: 100, A: 100})
+var _defaultDebugColor = newValue(color.RGBA64{G: 0xffff >> 1, A: 0xffff >> 1})
 
-func SetDefaultDebugColor(color color.Color) {
-	_defaultDebugColor.Store(color)
+func SetDefaultDebugColor(clr color.Color) {
+	r, g, b, a := clr.RGBA()
+	_defaultDebugColor.Store(color.RGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)})
 }
 
 func DefaultDebugColor() color.Color {
-	return _defaultDebugColor.Load().(color.Color)
+	return _defaultDebugColor.Load()
 }
 
 /*
@@ -104,5 +104,5 @@ func SetDefaultFont(font []byte) {
 }
 
 func DefaultFont() []byte {
-	return _defaultFont.Load().([]byte)
+	return _defaultFont.Load()
 }

@@ -2,7 +2,6 @@ package ebitenpkg
 
 import (
 	"image/color"
-	"sync/atomic"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -55,11 +54,11 @@ type eText struct {
 	parent Attachable
 	debug  *ebiten.Image
 
-	text        *atomic.Value
-	size        *atomic.Value // float64
-	color       *atomic.Value // color.Color
-	lineSpacing *atomic.Value // float64
-	face        *atomic.Value // text.Face
+	text        value[string]
+	size        value[float64]      // float64
+	color       value[color.RGBA64] // color.Color
+	lineSpacing value[float64]      // float64
+	face        value[text.Face]    // text.Face
 }
 
 func (e *eText) Draw(screen *ebiten.Image) {
@@ -187,23 +186,23 @@ func (e eText) Debugged() bool {
 }
 
 func (e eText) Text() string {
-	return e.text.Load().(string)
+	return e.text.Load()
 }
 
 func (e eText) Face() text.Face {
-	return e.face.Load().(text.Face)
+	return e.face.Load()
 }
 
 func (e eText) Size() float64 {
-	return e.size.Load().(float64)
+	return e.size.Load()
 }
 
 func (e eText) Color() color.Color {
-	return e.color.Load().(color.Color)
+	return e.color.Load()
 }
 
 func (e eText) LineSpacing() float64 {
-	return e.lineSpacing.Load().(float64)
+	return e.lineSpacing.Load()
 }
 
 func (e eText) DrawOption() *ebiten.DrawImageOptions {
