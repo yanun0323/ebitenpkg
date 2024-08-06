@@ -33,6 +33,7 @@ type Image interface {
 	CollisionID() ID
 	CollisionGroup() int
 	Parent() Attachable
+	IsClick(x, y float64) bool
 }
 
 type SpriteSheetOption struct {
@@ -228,4 +229,9 @@ func (e *eImage) CollisionGroup() int {
 
 func (e *eImage) Parent() Attachable {
 	return e.parent
+}
+
+func (e *eImage) IsClick(x, y float64) bool {
+	vertexes := getVertexes(float64(e.imageWidth), float64(e.imageHeight), e, e.parent)
+	return isInside(vertexes, Vector{X: x, Y: y})
 }
