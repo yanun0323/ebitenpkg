@@ -186,7 +186,7 @@ func (e *eImage) Debug(on ...bool) Image {
 	return e
 }
 
-func (e eImage) Bounds() (width int, height int) {
+func (e *eImage) Bounds() (width int, height int) {
 	if e.spriteOption.SpriteHandler == nil {
 		return e.imageWidth, e.imageHeight
 	}
@@ -194,38 +194,38 @@ func (e eImage) Bounds() (width int, height int) {
 	return e.imageWidth / e.spriteOption.SpriteWidthCount, e.imageHeight / e.spriteOption.SpriteHeightCount
 }
 
-func (e eImage) Aligned() Align {
+func (e *eImage) Aligned() Align {
 	return e.controller.GetAlign()
 }
 
-func (e eImage) Moved() (x, y float64) {
+func (e *eImage) Moved() (x, y float64) {
 	return e.controller.GetMove()
 }
 
-func (e eImage) Scaled() (x, y float64) {
+func (e *eImage) Scaled() (x, y float64) {
 	return e.controller.GetScale()
 }
 
-func (e eImage) Rotated() (angle float64) {
+func (e *eImage) Rotated() (angle float64) {
 	return e.controller.GetRotate()
 }
 
-func (e eImage) Debugged() bool {
+func (e *eImage) Debugged() bool {
 	return e.debug != nil
 }
 
-func (e eImage) SpriteSheet() (SpriteSheetOption, bool) {
+func (e *eImage) SpriteSheet() (SpriteSheetOption, bool) {
 	return e.spriteOption, e.spriteOption.SpriteHandler != nil
 }
 
-func (e eImage) CollisionID() ID {
+func (e *eImage) CollisionID() ID {
 	return e.id
 }
 
-func (e eImage) CollisionGroup() int {
+func (e *eImage) CollisionGroup() int {
 	return e.collisionGroup
 }
 
-func (e eImage) Parent() Attachable {
+func (e *eImage) Parent() Attachable {
 	return e.parent
 }

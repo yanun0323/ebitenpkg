@@ -160,52 +160,52 @@ func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 	return e
 }
 
-func (e eText) Bounds() (width int, height int) {
+func (e *eText) Bounds() (width int, height int) {
 	w, h := text.Measure(e.Text(), e.Face(), e.LineSpacing())
 	return int(w), int(h)
 }
 
-func (e eText) Aligned() Align {
+func (e *eText) Aligned() Align {
 	return e.controller.GetAlign()
 }
 
-func (e eText) Moved() (x, y float64) {
+func (e *eText) Moved() (x, y float64) {
 	return e.controller.GetMove()
 }
 
-func (e eText) Scaled() (x, y float64) {
+func (e *eText) Scaled() (x, y float64) {
 	return e.controller.GetScale()
 }
 
-func (e eText) Rotated() (angle float64) {
+func (e *eText) Rotated() (angle float64) {
 	return e.controller.GetRotate()
 }
 
-func (e eText) Debugged() bool {
+func (e *eText) Debugged() bool {
 	return e.debug != nil
 }
 
-func (e eText) Text() string {
+func (e *eText) Text() string {
 	return e.text.Load()
 }
 
-func (e eText) Face() text.Face {
+func (e *eText) Face() text.Face {
 	return e.face.Load()
 }
 
-func (e eText) Size() float64 {
+func (e *eText) Size() float64 {
 	return e.size.Load()
 }
 
-func (e eText) Color() color.Color {
+func (e *eText) Color() color.Color {
 	return e.color.Load()
 }
 
-func (e eText) LineSpacing() float64 {
+func (e *eText) LineSpacing() float64 {
 	return e.lineSpacing.Load()
 }
 
-func (e eText) DrawOption() *ebiten.DrawImageOptions {
+func (e *eText) DrawOption() *ebiten.DrawImageOptions {
 	w, h := e.Bounds()
 	return getDrawOption(w, h, e.controller, 1, 1, e.parent)
 }

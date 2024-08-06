@@ -1,12 +1,5 @@
 package ebitenpkg
 
-type controllerAdditionValue struct {
-	targetTick int
-	lastTick   int
-	offset     Vector
-	replace    bool
-}
-
 // controller controls the movement of an object.
 //
 // It can be used to move an object, rotate it, scale it, and align it.
@@ -16,12 +9,12 @@ type controller struct {
 	direction        Direction
 	align            Align
 	movement         Vector
-	movementAddition map[controllerAdditionValue]struct{}
+	movementAddition chan controllerDelta
 	scaled           bool /* for init scale */
 	scale            Vector
-	scaleAddition    map[controllerAdditionValue]struct{}
+	scaleAddition    chan controllerDelta
 	rotation         float64
-	rotationAddition map[controllerAdditionValue]struct{}
+	rotationAddition chan controllerDelta
 }
 
 func (ctr *controller) SetAlign(a Align) {
@@ -29,12 +22,6 @@ func (ctr *controller) SetAlign(a Align) {
 }
 
 func (ctr *controller) SetMove(x, y float64, replace ...bool) {
-	for add := range ctr.movementAddition {
-		if add.replace && add.targetTick < add.lastTick {
-			return
-		}
-	}
-
 	if len(replace) != 0 && replace[0] {
 		ctr.direction = newDirectionFrom(ctr.movement.X, ctr.movement.Y, x, y)
 		ctr.movement = Vector{X: x, Y: y}
@@ -49,34 +36,15 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 		return
 	}
 
-	offset := Vector{X: x / float64(tick), Y: y / float64(tick)}
-	rp := len(replace) != 0 && replace[0]
-	if rp {
-		offset = Vector{X: ctr.movement.X + offset.X, Y: ctr.movement.Y + offset.Y}
-	}
-
-	current := CurrentGameTime()
-	add := controllerAdditionValue{
-		targetTick: current + tick,
-		lastTick:   current,
-		offset:     offset,
-		replace:    rp,
-	}
+	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
 
 	if rp || ctr.movementAddition == nil {
-		ctr.movementAddition = map[controllerAdditionValue]struct{}{add: {}}
-	} else {
-		ctr.movementAddition[add] = struct{}{}
+		ctr.movementAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+	ctr.movementAddition <- add
 }
 
 func (ctr *controller) SetRotate(degree float64, replace ...bool) {
-	for add := range ctr.rotationAddition {
-		if add.replace && add.targetTick < add.lastTick {
-			return
-		}
-	}
-
 	if len(replace) != 0 && replace[0] {
 		ctr.rotation = degree
 	} else {
@@ -89,29 +57,15 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 		return
 	}
 
-	rp := len(replace) != 0 && replace[0]
-	current := CurrentGameTime()
-	add := controllerAdditionValue{
-		targetTick: current + tick,
-		lastTick:   current,
-		offset:     Vector{X: degree / float64(tick), Y: 0},
-		replace:    rp,
-	}
+	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0])
 
 	if rp || ctr.rotationAddition == nil {
-		ctr.rotationAddition = map[controllerAdditionValue]struct{}{add: {}}
-	} else {
-		ctr.rotationAddition[add] = struct{}{}
+		ctr.rotationAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+	ctr.rotationAddition <- add
 }
 
 func (ctr *controller) SetScale(x, y float64, replace ...bool) {
-	for add := range ctr.scaleAddition {
-		if add.replace && add.targetTick < add.lastTick {
-			return
-		}
-	}
-
 	if !ctr.scaled {
 		ctr.scale = Vector{X: 1, Y: 1}
 		ctr.scaled = true
@@ -134,118 +88,69 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 		ctr.scaled = true
 	}
 
-	offset := Vector{X: x / float64(tick), Y: y / float64(tick)}
-	rp := len(replace) != 0 && replace[0]
-	if rp {
-		offset = Vector{X: ctr.scale.X * offset.X, Y: ctr.scale.Y * offset.Y}
-	}
-
-	current := CurrentGameTime()
-	add := controllerAdditionValue{
-		targetTick: current + tick,
-		lastTick:   current,
-		offset:     offset,
-		replace:    rp,
-	}
+	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
 
 	if rp || ctr.scaleAddition == nil {
-		ctr.scaleAddition = map[controllerAdditionValue]struct{}{add: {}}
-	} else {
-		ctr.scaleAddition[add] = struct{}{}
+		ctr.scaleAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+	ctr.scaleAddition <- add
 }
 
-func (ctr controller) GetAlign() Align {
+func (ctr *controller) GetAlign() Align {
 	return ctr.align
 }
 
 func (ctr *controller) GetMove() (x, y float64) {
 	tick := CurrentGameTime()
-	for add := range ctr.movementAddition {
-		if add.targetTick <= add.lastTick {
-			delete(ctr.movementAddition, add)
+	cache := ctr.movement
+	for i := len(ctr.movementAddition) - 1; i >= 0; i-- {
+		add := <-ctr.movementAddition
+		if add.IsComplete() {
 			continue
 		}
 
-		var tickOffset float64
-		if tick >= add.targetTick {
-			tickOffset = float64(add.targetTick - add.lastTick)
-		} else {
-			tickOffset = float64(tick - add.lastTick)
-		}
-
-		if add.replace {
-			ctr.movement = Vector{X: add.offset.X, Y: add.offset.Y}
-		} else {
-			valueX := add.offset.X * tickOffset
-			valueY := add.offset.Y * tickOffset
-			ctr.movement = Vector{X: ctr.movement.X + valueX, Y: ctr.movement.Y + valueY}
-		}
-
-		add.lastTick = tick
+		cache = add.CalculateResult(tick, cache, false)
+		ctr.movementAddition <- add
 	}
+	ctr.movement.X, ctr.movement.Y = cache.X, cache.Y
 
 	return ctr.movement.X, ctr.movement.Y
 }
 
-func (ctr controller) GetDirection() Direction {
+func (ctr *controller) GetDirection() Direction {
 	return ctr.direction
 }
 
 func (ctr *controller) GetRotate() float64 {
 	tick := CurrentGameTime()
-	for add := range ctr.rotationAddition {
-		if add.targetTick <= add.lastTick {
-			delete(ctr.rotationAddition, add)
+	cache := ctr.rotation
+	for i := len(ctr.rotationAddition) - 1; i >= 0; i-- {
+		add := <-ctr.rotationAddition
+		if add.IsComplete() {
 			continue
 		}
 
-		var tickOffset float64
-		if tick >= add.targetTick {
-			tickOffset = float64(add.targetTick - add.lastTick)
-		} else {
-			tickOffset = float64(tick - add.lastTick)
-		}
-
-		value := add.offset.X * tickOffset
-
-		if add.replace {
-			ctr.rotation = value
-		} else {
-			ctr.rotation += value
-		}
-
-		add.lastTick = tick
+		cache = add.CalculateResult(tick, Vector{X: cache}, false).X
+		ctr.rotationAddition <- add
 	}
+	ctr.rotation = cache
 
 	return ctr.rotation
 }
 
 func (ctr *controller) GetScale() (x, y float64) {
 	tick := CurrentGameTime()
-	for add := range ctr.scaleAddition {
-		if add.targetTick <= add.lastTick {
-			delete(ctr.scaleAddition, add)
+	cache := ctr.scale
+	for i := len(ctr.scaleAddition) - 1; i >= 0; i-- {
+		add := <-ctr.scaleAddition
+		if add.IsComplete() {
 			continue
 		}
 
-		var tickOffset float64
-		if tick >= add.targetTick {
-			tickOffset = float64(add.targetTick - add.lastTick)
-		} else {
-			tickOffset = float64(tick - add.lastTick)
-		}
-
-		if add.replace {
-			ctr.scale = Vector{X: add.offset.X, Y: add.offset.Y}
-		} else {
-			valueX := add.offset.X * tickOffset
-			valueY := add.offset.Y * tickOffset
-			ctr.scale = Vector{X: ctr.scale.X + valueX, Y: ctr.scale.Y + valueY}
-		}
-
-		add.lastTick = tick
+		cache = add.CalculateResult(tick, cache, true)
+		ctr.scaleAddition <- add
 	}
+	ctr.scale = cache
 
 	if ctr.scaled {
 		return ctr.scale.X, ctr.scale.Y
@@ -254,7 +159,7 @@ func (ctr *controller) GetScale() (x, y float64) {
 	return 1, 1
 }
 
-func (ctr controller) GetBarycenter(parentMovement ...Vector) (float64, float64) {
+func (ctr *controller) GetBarycenter(parentMovement ...Vector) (float64, float64) {
 	if len(parentMovement) == 0 {
 		return ctr.movement.X, ctr.movement.Y
 	}

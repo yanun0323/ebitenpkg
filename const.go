@@ -12,6 +12,7 @@ import (
 const (
 	_radianToDegree = 180 / math.Pi
 	_floatFix       = 1e-3
+	_defaultChanCap = 100
 )
 
 type ID uuid.UUID
