@@ -24,6 +24,7 @@ type Text interface {
 	SetSize(size float64) Text
 	SetColor(color color.Color) Text
 	SetLineSpacing(lineSpacing float64) Text
+	SetFont(font []byte) Text
 
 	Bounds() (width int, height int)
 	Aligned() Align
@@ -42,9 +43,10 @@ func NewText(text string, size float64) Text {
 	return &eText{
 		text:        newValue(text),
 		size:        newValue(size),
-		face:        newValue(newFace(size)),
+		face:        newValue(newFace(size, DefaultFont())),
 		color:       newValue(color.RGBA64{}),
 		lineSpacing: newValue(0.0),
+		font:        newValue(DefaultFont()),
 	}
 }
 
@@ -55,10 +57,11 @@ type eText struct {
 	debug  *ebiten.Image
 
 	text        value[string]
-	size        value[float64]      // float64
-	color       value[color.RGBA64] // color.Color
-	lineSpacing value[float64]      // float64
-	face        value[text.Face]    // text.Face
+	size        value[float64]
+	color       value[color.RGBA64]
+	lineSpacing value[float64]
+	face        value[text.Face]
+	font        value[[]byte]
 }
 
 func (e *eText) Draw(screen *ebiten.Image) {
@@ -134,7 +137,7 @@ func (e *eText) SetText(text string) Text {
 
 func (e *eText) SetSize(size float64) Text {
 	e.size.Store(size)
-	e.face.Store(newFace(size))
+	e.face.Store(newFace(size, e.font.Load()))
 	if e.debug != nil {
 		e.debug = nil
 		e.Debug()
@@ -152,6 +155,17 @@ func (e *eText) SetColor(clr color.Color) Text {
 
 func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 	e.lineSpacing.Store(lineSpacing)
+	if e.debug != nil {
+		e.debug = nil
+		e.Debug()
+	}
+
+	return e
+}
+
+func (e *eText) SetFont(font []byte) Text {
+	e.font.Store(font)
+	e.face.Store(newFace(e.size.Load(), font))
 	if e.debug != nil {
 		e.debug = nil
 		e.Debug()
@@ -210,14 +224,14 @@ func (e *eText) DrawOption() *ebiten.DrawImageOptions {
 	return getDrawOption(w, h, e.controller, 1, 1, e.parent)
 }
 
-func newFace(size float64) text.Face {
+func newFace(size float64, fonts []byte) text.Face {
 	opt := &opentype.FaceOptions{
 		Size:    size,
 		DPI:     DefaultTextDpi(),
 		Hinting: font.HintingNone,
 	}
 
-	ff, err := opentype.Parse(DefaultFont())
+	ff, err := opentype.Parse(fonts)
 	if err != nil {
 		return text.NewGoXFace(nil)
 	}
