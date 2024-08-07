@@ -1,12 +1,14 @@
 package ebitenpkg
 
 import (
+	"bytes"
 	"image/color"
 	"math"
 	"sync"
 
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 const (
@@ -55,15 +57,15 @@ func CurrentGameTime() int {
 	Default Align
 */
 
-var _defaultAlignValue = newValue(AlignCenter)
+var _defaultAlign = newValue(AlignCenter)
 
 func SetDefaultAlign(align Align) Align {
-	_defaultAlignValue.Store(align)
+	_defaultAlign.Store(align)
 	return DefaultAlign()
 }
 
 func DefaultAlign() Align {
-	return _defaultAlignValue.Load()
+	return _defaultAlign.Load()
 }
 
 /*
@@ -99,12 +101,20 @@ func DefaultDebugColor() color.Color {
 	Default Font
 */
 
-var _defaultFont = newValue(fonts.MPlus1pRegular_ttf)
+var _defaultFont = newValue[*text.GoTextFaceSource](defaultFont())
 
-func SetDefaultFont(font []byte) {
-	_defaultFont.Store(font)
+func defaultFont() *text.GoTextFaceSource {
+	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	return fs
 }
 
-func DefaultFont() []byte {
+func SetDefaultFont(fonts []byte) {
+	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts))
+	if fs != nil {
+		_defaultFont.Store(fs)
+	}
+}
+
+func DefaultFont() *text.GoTextFaceSource {
 	return _defaultFont.Load()
 }

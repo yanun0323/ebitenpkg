@@ -1,12 +1,11 @@
 package ebitenpkg
 
 import (
+	"bytes"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
 )
 
 type Text interface {
@@ -61,7 +60,7 @@ type eText struct {
 	color       value[color.RGBA64]
 	lineSpacing value[float64]
 	face        value[text.Face]
-	font        value[[]byte]
+	font        value[*text.GoTextFaceSource]
 }
 
 func (e *eText) Draw(screen *ebiten.Image) {
@@ -70,7 +69,7 @@ func (e *eText) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, e.Text(), e.Face(), &text.DrawOptions{
 		DrawImageOptions: *opt,
-		LayoutOptions:    text.LayoutOptions{LineSpacing: e.lineSpacing.Load()},
+		LayoutOptions:    text.LayoutOptions{LineSpacing: e.LineSpacing()},
 	})
 
 	if e.debug != nil {
@@ -164,8 +163,13 @@ func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 }
 
 func (e *eText) SetFont(font []byte) Text {
-	e.font.Store(font)
-	e.face.Store(newFace(e.size.Load(), font))
+	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(font))
+	if fs == nil {
+		return e
+	}
+
+	e.font.Store(fs)
+	e.face.Store(newFace(e.size.Load(), fs))
 	if e.debug != nil {
 		e.debug = nil
 		e.Debug()
@@ -224,22 +228,9 @@ func (e *eText) DrawOption() *ebiten.DrawImageOptions {
 	return getDrawOption(w, h, e.controller, 1, 1, e.parent)
 }
 
-func newFace(size float64, fonts []byte) text.Face {
-	opt := &opentype.FaceOptions{
-		Size:    size,
-		DPI:     DefaultTextDpi(),
-		Hinting: font.HintingNone,
+func newFace(size float64, fonts *text.GoTextFaceSource) text.Face {
+	return &text.GoTextFace{
+		Source: fonts,
+		Size:   size,
 	}
-
-	ff, err := opentype.Parse(fonts)
-	if err != nil {
-		return text.NewGoXFace(nil)
-	}
-
-	ft, err := opentype.NewFace(ff, opt)
-	if err != nil {
-		return text.NewGoXFace(nil)
-	}
-
-	return text.NewGoXFace(ft)
 }
