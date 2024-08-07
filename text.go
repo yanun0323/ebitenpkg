@@ -70,7 +70,7 @@ func (e *eText) Draw(screen *ebiten.Image) {
 
 	text.Draw(screen, e.Text(), e.Face(), &text.DrawOptions{
 		DrawImageOptions: *opt,
-		LayoutOptions:    text.LayoutOptions{LineSpacing: 100},
+		LayoutOptions:    text.LayoutOptions{LineSpacing: e.lineSpacing.Load()},
 	})
 
 	if e.debug != nil {
