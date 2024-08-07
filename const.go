@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/yanun0323/pkg/logs"
 )
 
 const (
@@ -104,15 +105,29 @@ func DefaultDebugColor() color.Color {
 var _defaultFont = newValue[*text.GoTextFaceSource](defaultFont())
 
 func defaultFont() *text.GoTextFaceSource {
-	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	if err != nil {
+		logs.Fatalf("failed to load default font: %v", err)
+	}
+
+	if fs == nil {
+		logs.Fatalf("failed to load default font")
+	}
+
 	return fs
 }
 
 func SetDefaultFont(fonts []byte) {
-	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts))
-	if fs != nil {
-		_defaultFont.Store(fs)
+	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts))
+	if err != nil {
+		logs.Fatalf("failed to load default font: %v", err)
 	}
+
+	if fs == nil {
+		logs.Fatalf("failed to load default font")
+	}
+
+	_defaultFont.Store(fs)
 }
 
 func DefaultFont() *text.GoTextFaceSource {

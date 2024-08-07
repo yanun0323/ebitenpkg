@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/yanun0323/pkg/logs"
 )
 
 type Text interface {
@@ -163,9 +164,13 @@ func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 }
 
 func (e *eText) SetFont(font []byte) Text {
-	fs, _ := text.NewGoTextFaceSource(bytes.NewReader(font))
+	fs, err := text.NewGoTextFaceSource(bytes.NewReader(font))
+	if err != nil {
+		logs.Fatalf("failed to load font: %v", err)
+	}
+
 	if fs == nil {
-		return e
+		logs.Fatalf("failed to load font")
 	}
 
 	e.font.Store(fs)
