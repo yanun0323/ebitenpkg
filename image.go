@@ -2,6 +2,7 @@ package ebitenpkg
 
 import (
 	"image"
+	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -43,12 +44,20 @@ type SpriteSheetOption struct {
 }
 
 func NewImage(img image.Image) Image {
-	imageWidth, imageHeight := img.Bounds().Dx(), img.Bounds().Dy()
 	return &eImage{
 		id:          newID(),
 		image:       ebiten.NewImageFromImage(img),
-		imageWidth:  imageWidth,
-		imageHeight: imageHeight,
+		imageWidth:  img.Bounds().Dx(),
+		imageHeight: img.Bounds().Dy(),
+	}
+}
+
+func NewImageWith(w, h int, clr ...color.Color) Image {
+	return &eImage{
+		id:          newID(),
+		image:       NewEbitenImage(w, h, clr...),
+		imageWidth:  w,
+		imageHeight: h,
 	}
 }
 
@@ -180,10 +189,7 @@ func (e *eImage) Debug(on ...bool) Image {
 		return e
 	}
 
-	w, h := e.Bounds()
-	img := ebiten.NewImage(w, h)
-	img.Fill(DefaultDebugColor())
-	e.debug = img
+	e.debug = NewEbitenImageWith(e.Bounds, DefaultDebugColor())
 	return e
 }
 

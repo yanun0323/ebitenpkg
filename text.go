@@ -37,6 +37,7 @@ type Text interface {
 	Size() float64
 	Color() color.Color
 	LineSpacing() float64
+	IsClick(x, y float64) bool
 }
 
 func NewText(text string, size float64) Text {
@@ -53,8 +54,8 @@ func NewText(text string, size float64) Text {
 type eText struct {
 	controller
 
-	parent Attachable
-	debug  *ebiten.Image
+	parent value[Attachable]
+	debug  value[*ebiten.Image]
 
 	text        value[string]
 	size        value[float64]
@@ -73,8 +74,8 @@ func (e *eText) Draw(screen *ebiten.Image) {
 		LayoutOptions:    text.LayoutOptions{LineSpacing: e.LineSpacing()},
 	})
 
-	if e.debug != nil {
-		screen.DrawImage(e.debug, opt)
+	if debug := e.debug.Load(); debug != nil {
+		screen.DrawImage(debug, opt)
 	}
 }
 
@@ -99,38 +100,33 @@ func (e *eText) Rotate(angle float64, replace ...bool) Text {
 }
 
 func (e *eText) Attach(parent Attachable) Text {
-	e.parent = parent
+	e.parent.Store(parent)
 	return e
 }
 
 func (e *eText) Detach() (parent Attachable) {
-	e.parent = nil
+	e.parent.Store(nil)
 	return e
 }
 
 func (e *eText) Debug(on ...bool) Text {
+	debug := e.debug.Load()
 	if len(on) != 0 && !on[0] {
-		e.debug = nil
+		debug = nil
 		return e
 	}
 
-	if e.debug != nil {
+	if debug != nil {
 		return e
 	}
 
-	w, h := e.Bounds()
-	img := ebiten.NewImage(w, h)
-	img.Fill(DefaultDebugColor())
-	e.debug = img
+	e.debug.Store(NewEbitenImageWith(e.Bounds, DefaultDebugColor()))
 	return e
 }
 
 func (e *eText) SetText(text string) Text {
 	e.text.Store(text)
-	if e.debug != nil {
-		e.debug = nil
-		e.Debug()
-	}
+	e.resetDebug()
 
 	return e
 }
@@ -138,10 +134,7 @@ func (e *eText) SetText(text string) Text {
 func (e *eText) SetSize(size float64) Text {
 	e.size.Store(size)
 	e.face.Store(newFace(size, e.font.Load()))
-	if e.debug != nil {
-		e.debug = nil
-		e.Debug()
-	}
+	e.resetDebug()
 
 	return e
 }
@@ -155,10 +148,7 @@ func (e *eText) SetColor(clr color.Color) Text {
 
 func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 	e.lineSpacing.Store(lineSpacing)
-	if e.debug != nil {
-		e.debug = nil
-		e.Debug()
-	}
+	e.resetDebug()
 
 	return e
 }
@@ -175,10 +165,7 @@ func (e *eText) SetFont(font []byte) Text {
 
 	e.font.Store(fs)
 	e.face.Store(newFace(e.size.Load(), fs))
-	if e.debug != nil {
-		e.debug = nil
-		e.Debug()
-	}
+	e.resetDebug()
 
 	return e
 }
@@ -205,7 +192,7 @@ func (e *eText) Rotated() (angle float64) {
 }
 
 func (e *eText) Debugged() bool {
-	return e.debug != nil
+	return e.debug.Load() != nil
 }
 
 func (e *eText) Text() string {
@@ -228,9 +215,21 @@ func (e *eText) LineSpacing() float64 {
 	return e.lineSpacing.Load()
 }
 
+func (e *eText) IsClick(x, y float64) bool {
+	w, h := e.Bounds()
+	vertexes := getVertexes(float64(w), float64(h), e, e.parent.Load())
+	return isInside(vertexes, Vector{X: x, Y: y})
+}
+
 func (e *eText) DrawOption() *ebiten.DrawImageOptions {
 	w, h := e.Bounds()
-	return getDrawOption(w, h, e.controller, 1, 1, e.parent)
+	return getDrawOption(w, h, e.controller, 1, 1, e.parent.Load())
+}
+
+func (e *eText) resetDebug() {
+	if debug := e.debug.Load(); debug != nil {
+		e.debug.Store(nil)
+	}
 }
 
 func newFace(size float64, fonts *text.GoTextFaceSource) text.Face {

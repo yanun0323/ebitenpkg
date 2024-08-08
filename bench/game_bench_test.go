@@ -21,7 +21,7 @@ func NewGame() *TestGame {
 	}()
 
 	return &TestGame{
-		Img:      ebiten.NewImage(500, 500),
+		Img:      ebitenpkg.NewEbitenImage(500, 500),
 		Shutdown: ch,
 	}
 }

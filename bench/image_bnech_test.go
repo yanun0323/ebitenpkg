@@ -22,7 +22,7 @@ func NewTestEbitenImage() TestEbitenImage {
 	}()
 
 	return TestEbitenImage{
-		Img:      ebiten.NewImage(500, 500),
+		Img:      ebitenpkg.NewEbitenImage(500, 500),
 		Opt:      &ebiten.DrawImageOptions{},
 		Shutdown: ch,
 	}
@@ -41,7 +41,7 @@ func NewTestEbitenpkgImage() TestEbitenpkgImage {
 	}()
 
 	return TestEbitenpkgImage{
-		Img:      ebitenpkg.NewImage(ebiten.NewImage(500, 500)),
+		Img:      ebitenpkg.NewImage(ebitenpkg.NewEbitenImage(500, 500)),
 		Shutdown: ch,
 	}
 }

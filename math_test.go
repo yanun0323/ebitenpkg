@@ -3,8 +3,6 @@ package ebitenpkg
 import (
 	"math"
 	"testing"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func TestMathIsInside(t *testing.T) {
@@ -117,7 +115,7 @@ func TestGetVertexes(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.alignHelper.Execute(func(a Align, v []Vector) {
-				ctr := NewImage(ebiten.NewImage(50, 50)).Align(a)
+				ctr := NewImage(NewEbitenImage(50, 50)).Align(a)
 				vs := getVertexes(2, 2, ctr)
 				if len(vs) != len(v) {
 					t.Fatalf("expected len %d, but got %d", len(v), len(vs))
