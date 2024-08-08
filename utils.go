@@ -44,6 +44,10 @@ func (i *canvas) DrawImageOn(w, h int, clr color.Color, x, y float64) *canvas {
 	return i
 }
 
-func (i *canvas) Image() *ebiten.Image {
+func (i *canvas) EbitenImage() *ebiten.Image {
 	return i.base
+}
+
+func (i *canvas) Image() Image {
+	return NewImage(i.base)
 }
