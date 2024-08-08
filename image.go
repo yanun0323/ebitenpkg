@@ -45,76 +45,79 @@ type SpriteSheetOption struct {
 
 func NewImage(img image.Image) Image {
 	return &eImage{
-		id:          newID(),
-		image:       ebiten.NewImageFromImage(img),
-		imageWidth:  img.Bounds().Dx(),
-		imageHeight: img.Bounds().Dy(),
+		id:          newValue(newID()),
+		image:       newValue(ebiten.NewImageFromImage(img)),
+		imageBounds: newValue(img.Bounds()),
 	}
 }
 
 func NewRectangle(w, h int, clr ...color.Color) Image {
 	return &eImage{
-		id:          newID(),
-		image:       NewEbitenImage(w, h, clr...),
-		imageWidth:  w,
-		imageHeight: h,
+		id:          newValue(newID()),
+		image:       newValue(NewEbitenImage(w, h, clr...)),
+		imageBounds: newValue(image.Rect(0, 0, w, h)),
 	}
 }
 
 type eImage struct {
 	controller
-	id ID
+	id value[ID]
 
-	image          *ebiten.Image
-	imageWidth     int
-	imageHeight    int
-	draw           *ebiten.Image
-	drawX, drawY   int
-	drawSX, drawSY int
+	image       value[*ebiten.Image]
+	imageBounds value[image.Rectangle]
+	draw        value[*ebiten.Image]
+	drawCoords  value[image.Point]
+	drawScale   value[image.Point]
 
-	spriteOption SpriteSheetOption
+	spriteOption value[SpriteSheetOption]
 
-	parent Attachable
+	parent value[Attachable]
 
-	collisionSpace Space
-	collisionGroup int
+	collisionSpace value[Space]
+	collisionGroup value[int]
 
-	debug *ebiten.Image
+	debug value[*ebiten.Image]
 }
 
 func (e *eImage) Draw(screen *ebiten.Image) {
-	if e.spriteOption.SpriteHandler == nil {
-		option := getDrawOption(e.imageWidth, e.imageHeight, e.controller, 1, 1, e.parent)
-		screen.DrawImage(e.image, option)
+	spriteOption := e.spriteOption.Load()
+	if spriteOption.SpriteHandler == nil {
+		imageBounds := e.imageBounds.Load()
+		option := getDrawOption(imageBounds.Dx(), imageBounds.Dy(), e.controller, 1, 1, e.Parent())
+		screen.DrawImage(e.image.Load(), option)
 
-		if e.debug != nil {
-			screen.DrawImage(e.debug, option)
+		if debug := e.debug.Load(); debug != nil {
+			screen.DrawImage(debug, option)
 		}
 		return
 	}
 
 	sW, sH := e.Bounds()
-	x, y, sX, sY := e.spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
+	x, y, sX, sY := spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
 	if x >= 0 && y >= 0 {
-		if e.draw == nil || x != e.drawX || y != e.drawY || sX != e.drawSX || sY != e.drawSY {
+		draw := e.draw.Load()
+		drawCoords := e.drawCoords.Load()
+		drawScale := e.drawScale.Load()
+		if e.draw.Load() == nil || x != drawCoords.X || y != drawCoords.Y || sX != drawScale.X || sY != drawScale.Y {
 			oX, oY := x*sW, y*sH
 
 			rect := image.Rect(oX, oY, oX+sW, oY+sH)
-			e.draw = e.image.SubImage(rect).(*ebiten.Image)
+			draw = e.image.Load().SubImage(rect).(*ebiten.Image)
+			e.draw.Store(draw)
 		}
 
-		e.drawX, e.drawY = x, y
-		e.drawSX, e.drawSY = sX, sY
+		e.drawCoords.Store(image.Point{X: x, Y: y})
+		e.drawScale.Store(image.Point{X: sX, Y: sY})
 	}
 
-	option := getDrawOption(sW, sH, e.controller, float64(sX), float64(sY), e.parent)
+	option := getDrawOption(sW, sH, e.controller, float64(sX), float64(sY), e.Parent())
 
-	if e.draw != nil {
-		screen.DrawImage(e.draw, option)
+	if draw := e.draw.Load(); draw != nil {
+		screen.DrawImage(draw, option)
 	}
 
-	if e.debug != nil {
-		screen.DrawImage(e.debug, option)
+	if debug := e.debug.Load(); debug != nil {
+		screen.DrawImage(debug, option)
 	}
 }
 
@@ -154,51 +157,53 @@ func (e *eImage) Rotating(angle float64, tick int, replace ...bool) Image {
 }
 
 func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
-	e.spriteOption = opt
+	e.spriteOption.Store(opt)
 	return e
 }
 
 func (e *eImage) Attach(parent Attachable) Image {
-	e.parent = parent
+	e.parent.Store(parent)
 	return e
 }
 
 func (e *eImage) Detach() (parent Attachable) {
-	result := e.parent
-	e.parent = nil
-	return result
+	return e.parent.Swap(nil)
 }
 
 func (e *eImage) Collidable(space Space, group int) Image {
-	if e.collisionSpace != nil {
-		e.collisionSpace.RemoveBody(e)
+	sp := e.collisionSpace.Load()
+	if sp != nil {
+		sp.RemoveBody(e)
 	}
 
-	e.collisionSpace = space.AddBody(e)
-	e.collisionGroup = group
+	e.collisionSpace.Store(space.AddBody(e))
+	e.collisionGroup.Store(group)
 	return e
 }
 
 func (e *eImage) Debug(on ...bool) Image {
+	debug := e.debug.Load()
 	if len(on) != 0 && !on[0] {
-		e.debug = nil
+		e.debug.Store(nil)
 		return e
 	}
 
-	if e.debug != nil {
+	if debug != nil {
 		return e
 	}
 
-	e.debug = NewEbitenImageFromBounds(e.Bounds, DefaultDebugColor())
+	e.debug.Store(NewEbitenImageFromBounds(e.Bounds, DefaultDebugColor()))
 	return e
 }
 
 func (e *eImage) Bounds() (width int, height int) {
-	if e.spriteOption.SpriteHandler == nil {
-		return e.imageWidth, e.imageHeight
+	imageBounds := e.imageBounds.Load()
+	opt := e.spriteOption.Load()
+	if opt.SpriteHandler == nil {
+		return imageBounds.Dx(), imageBounds.Dy()
 	}
 
-	return e.imageWidth / e.spriteOption.SpriteWidthCount, e.imageHeight / e.spriteOption.SpriteHeightCount
+	return imageBounds.Dx() / opt.SpriteWidthCount, imageBounds.Dy() / opt.SpriteHeightCount
 }
 
 func (e *eImage) Aligned() Align {
@@ -218,26 +223,28 @@ func (e *eImage) Rotated() (angle float64) {
 }
 
 func (e *eImage) Debugged() bool {
-	return e.debug != nil
+	return e.debug.Load() != nil
 }
 
 func (e *eImage) SpriteSheet() (SpriteSheetOption, bool) {
-	return e.spriteOption, e.spriteOption.SpriteHandler != nil
+	opt := e.spriteOption.Load()
+	return opt, opt.SpriteHandler != nil
 }
 
 func (e *eImage) CollisionID() ID {
-	return e.id
+	return e.id.Load()
 }
 
 func (e *eImage) CollisionGroup() int {
-	return e.collisionGroup
+	return e.collisionGroup.Load()
 }
 
 func (e *eImage) Parent() Attachable {
-	return e.parent
+	return e.parent.Load()
 }
 
 func (e *eImage) IsClick(x, y float64) bool {
-	vertexes := getVertexes(float64(e.imageWidth), float64(e.imageHeight), e, e.parent)
+	imageBounds := e.imageBounds.Load()
+	vertexes := getVertexes(float64(imageBounds.Dx()), float64(imageBounds.Dy()), e, e.Parent())
 	return isInside(vertexes, Vector{X: x, Y: y})
 }

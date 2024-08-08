@@ -28,3 +28,12 @@ func (v *value[T]) Load() T {
 func (v *value[T]) Store(d T) {
 	v.value.Store(d)
 }
+
+func (v *value[T]) Swap(d T) (old T) {
+	swapped := v.value.Swap(d)
+	if swapped == nil {
+		return v.defaultValue
+	}
+
+	return swapped.(T)
+}
