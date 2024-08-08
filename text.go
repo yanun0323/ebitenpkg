@@ -33,10 +33,10 @@ type Text interface {
 	Rotated() (angle float64)
 	Debugged() bool
 
-	Text() string
-	Size() float64
-	Color() color.Color
-	LineSpacing() float64
+	GetText() string
+	GetSize() float64
+	GetColor() color.Color
+	GetLineSpacing() float64
 	IsClick(x, y float64) bool
 }
 
@@ -67,11 +67,11 @@ type eText struct {
 
 func (e *eText) Draw(screen *ebiten.Image) {
 	opt := e.DrawOption()
-	opt.ColorScale.ScaleWithColor(e.Color())
+	opt.ColorScale.ScaleWithColor(e.GetColor())
 
-	text.Draw(screen, e.Text(), e.Face(), &text.DrawOptions{
+	text.Draw(screen, e.GetText(), e.Face(), &text.DrawOptions{
 		DrawImageOptions: *opt,
-		LayoutOptions:    text.LayoutOptions{LineSpacing: e.LineSpacing()},
+		LayoutOptions:    text.LayoutOptions{LineSpacing: e.GetLineSpacing()},
 	})
 
 	if debug := e.debug.Load(); debug != nil {
@@ -171,7 +171,7 @@ func (e *eText) SetFont(font []byte) Text {
 }
 
 func (e *eText) Bounds() (width int, height int) {
-	w, h := text.Measure(e.Text(), e.Face(), e.LineSpacing())
+	w, h := text.Measure(e.GetText(), e.Face(), e.GetLineSpacing())
 	return int(w), int(h)
 }
 
@@ -195,7 +195,7 @@ func (e *eText) Debugged() bool {
 	return e.debug.Load() != nil
 }
 
-func (e *eText) Text() string {
+func (e *eText) GetText() string {
 	return e.text.Load()
 }
 
@@ -203,15 +203,15 @@ func (e *eText) Face() text.Face {
 	return e.face.Load()
 }
 
-func (e *eText) Size() float64 {
+func (e *eText) GetSize() float64 {
 	return e.size.Load()
 }
 
-func (e *eText) Color() color.Color {
+func (e *eText) GetColor() color.Color {
 	return e.color.Load()
 }
 
-func (e *eText) LineSpacing() float64 {
+func (e *eText) GetLineSpacing() float64 {
 	return e.lineSpacing.Load()
 }
 
