@@ -16,7 +16,7 @@ type Text interface {
 	Move(x, y float64, replace ...bool) Text
 	Scale(x, y float64, replace ...bool) Text
 	Rotate(angle float64, replace ...bool) Text
-	Attach(parent attachable) Text
+	Attach(parent Attachable) Text
 	Detach()
 	Debug(on ...bool) Text
 
@@ -42,18 +42,15 @@ type Text interface {
 	ID() ID
 }
 
-func NewText(text string, size float64, children ...attachable) Text {
+func NewText(text string, size float64, children ...Attachable) Text {
 	result := &eText{
 		id:          newValue(newID()),
-		parent:      newValue[attachable](),
-		children:    &maps[ID, attachable]{},
 		text:        newValue(text),
 		size:        newValue(size),
 		color:       newValue(color.RGBA64{}),
 		lineSpacing: newValue(0.0),
 		face:        newValue(newFace(size, DefaultFont())),
 		font:        newValue(DefaultFont()),
-		debug:       newValue[*ebiten.Image](),
 	}
 
 	for _, s := range children {
@@ -65,24 +62,24 @@ func NewText(text string, size float64, children ...attachable) Text {
 
 type eText struct {
 	controller
-	id *value[ID]
+	id value[ID]
 
-	parent   *value[attachable]
-	children *maps[ID, attachable]
+	parent   value[Attachable]
+	children slices[Attachable]
 
-	text        *value[string]
-	size        *value[float64]
-	color       *value[color.RGBA64]
-	lineSpacing *value[float64]
-	face        *value[text.Face]
-	font        *value[*text.GoTextFaceSource]
+	text        value[string]
+	size        value[float64]
+	color       value[color.RGBA64]
+	lineSpacing value[float64]
+	face        value[text.Face]
+	font        value[*text.GoTextFaceSource]
 
-	debug *value[*ebiten.Image]
+	debug value[*ebiten.Image]
 }
 
 func (e *eText) Draw(screen *ebiten.Image) {
 	defer func() {
-		e.children.Range(func(id ID, c attachable) bool {
+		e.children.Range(func(_ int, c Attachable) bool {
 			c.Draw(screen)
 			return true
 		})
@@ -121,7 +118,7 @@ func (e *eText) Rotate(angle float64, replace ...bool) Text {
 	return e
 }
 
-func (e *eText) Attach(parent attachable) Text {
+func (e *eText) Attach(parent Attachable) Text {
 	attach(parent, e)
 	return e
 }

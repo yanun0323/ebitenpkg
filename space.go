@@ -16,7 +16,7 @@ type Collidable interface {
 	ID() ID
 	Group() int
 	Bounds() (w, h int)
-	Parent() attachable
+	Parent() Attachable
 }
 
 type space struct {

@@ -18,7 +18,7 @@ type Image interface {
 	Rotate(angle float64, replace ...bool) Image
 	Rotating(angle float64, tick int, replace ...bool) Image
 	Spriteable(SpriteSheetOption) Image
-	Attach(parent attachable) Image
+	Attach(parent Attachable) Image
 	Detach()
 	Collidable(space Space, group int) Image
 	Debug(on ...bool) Image
@@ -34,7 +34,7 @@ type Image interface {
 
 	ID() ID
 	Group() int
-	Parent() attachable
+	Parent() Attachable
 	IsClick(x, y float64) bool
 }
 
@@ -44,20 +44,11 @@ type SpriteSheetOption struct {
 	SpriteHandler     func(fps, timestamp int, direction Direction) (indexX, indexY, scaleX, scaleY int)
 }
 
-func NewImage(img image.Image, children ...attachable) Image {
+func NewImage(img image.Image, children ...Attachable) Image {
 	result := &eImage{
-		id:             newValue(newID()),
-		image:          newValue(ebiten.NewImageFromImage(img)),
-		imageBounds:    newValue(img.Bounds()),
-		draw:           newValue[*ebiten.Image](),
-		drawCoords:     newValue[image.Point](),
-		drawScale:      newValue[image.Point](),
-		spriteOption:   newValue[SpriteSheetOption](),
-		parent:         newValue[attachable](),
-		children:       &maps[ID, attachable]{},
-		collisionSpace: newValue[Space](),
-		collisionGroup: newValue[int](),
-		debug:          newValue[*ebiten.Image](),
+		id:          newValue(newID()),
+		image:       newValue(ebiten.NewImageFromImage(img)),
+		imageBounds: newValue(img.Bounds()),
 	}
 
 	for _, s := range children {
@@ -67,20 +58,11 @@ func NewImage(img image.Image, children ...attachable) Image {
 	return result
 }
 
-func NewRectangle(w, h int, clr color.Color, children ...attachable) Image {
+func NewRectangle(w, h int, clr color.Color, children ...Attachable) Image {
 	result := &eImage{
-		id:             newValue(newID()),
-		image:          newValue(NewEbitenImage(w, h, clr)),
-		imageBounds:    newValue(image.Rect(0, 0, w, h)),
-		draw:           newValue[*ebiten.Image](),
-		drawCoords:     newValue[image.Point](),
-		drawScale:      newValue[image.Point](),
-		spriteOption:   newValue[SpriteSheetOption](),
-		parent:         newValue[attachable](),
-		children:       &maps[ID, attachable]{},
-		collisionSpace: newValue[Space](),
-		collisionGroup: newValue[int](),
-		debug:          newValue[*ebiten.Image](),
+		id:          newValue(newID()),
+		image:       newValue(NewEbitenImage(w, h, clr)),
+		imageBounds: newValue(image.Rect(0, 0, w, h)),
 	}
 
 	for _, s := range children {
@@ -92,28 +74,28 @@ func NewRectangle(w, h int, clr color.Color, children ...attachable) Image {
 
 type eImage struct {
 	controller
-	id *value[ID]
+	id value[ID]
 
-	image       *value[*ebiten.Image]
-	imageBounds *value[image.Rectangle]
-	draw        *value[*ebiten.Image]
-	drawCoords  *value[image.Point]
-	drawScale   *value[image.Point]
+	image       value[*ebiten.Image]
+	imageBounds value[image.Rectangle]
+	draw        value[*ebiten.Image]
+	drawCoords  value[image.Point]
+	drawScale   value[image.Point]
 
-	spriteOption *value[SpriteSheetOption]
+	spriteOption value[SpriteSheetOption]
 
-	parent   *value[attachable]
-	children *maps[ID, attachable]
+	parent   value[Attachable]
+	children slices[Attachable]
 
-	collisionSpace *value[Space]
-	collisionGroup *value[int]
+	collisionSpace value[Space]
+	collisionGroup value[int]
 
-	debug *value[*ebiten.Image]
+	debug value[*ebiten.Image]
 }
 
 func (e *eImage) Draw(screen *ebiten.Image) {
 	defer func() {
-		e.children.Range(func(id ID, c attachable) bool {
+		e.children.Range(func(_ int, c Attachable) bool {
 			c.Draw(screen)
 			return true
 		})
@@ -200,7 +182,7 @@ func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
 	return e
 }
 
-func (e *eImage) Attach(parent attachable) Image {
+func (e *eImage) Attach(parent Attachable) Image {
 	attach(parent, e)
 	return e
 }
@@ -282,7 +264,7 @@ func (e *eImage) Group() int {
 	return e.collisionGroup.Load()
 }
 
-func (e *eImage) Parent() attachable {
+func (e *eImage) Parent() Attachable {
 	return e.parent.Load()
 }
 

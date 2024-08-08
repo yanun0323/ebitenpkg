@@ -8,23 +8,23 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/yanun0323/ebitenpkg"
 	"github.com/yanun0323/ebitenpkg/example/helper"
+	"github.com/yanun0323/pkg/logs"
 )
 
 func main() {
 	if err := ebiten.RunGame(NewGame()); err != nil {
-		panic(err)
+		logs.Fatal(err)
 	}
 }
 
 type Game struct {
-	LastGC            uint64
-	Space             ebitenpkg.Space
-	Walls             []ebitenpkg.Image
-	PikachuSprite     ebitenpkg.Image
-	PikachuSpriteName ebitenpkg.Text
-	PikachuIdle       ebitenpkg.Image
-	Gopher            ebitenpkg.Image
-	GameInfo          ebitenpkg.Text
+	LastGC        uint64
+	Space         ebitenpkg.Space
+	Walls         []ebitenpkg.Image
+	PikachuSprite ebitenpkg.Image
+	PikachuIdle   ebitenpkg.Image
+	Gopher        ebitenpkg.Image
+	GameInfo      ebitenpkg.Text
 }
 
 const (
@@ -35,6 +35,7 @@ const (
 )
 
 func NewGame() ebiten.Game {
+	logs.Debug("new game")
 	space := ebitenpkg.NewSpace()
 	w, h := ebiten.WindowSize()
 	fW, fH := float64(w), float64(h)
@@ -46,7 +47,16 @@ func NewGame() ebiten.Game {
 		Collidable(space, TypeOpponent)
 
 	pikachuSprite := ebitenpkg.
-		NewImage(helper.PikachuSpriteImage()).
+		NewImage(helper.PikachuSpriteImage(),
+			ebitenpkg.NewText("Pikachu", 20).
+				Align(ebitenpkg.AlignBottom).
+				Move(0, -30).
+				SetColor(color.White),
+			ebitenpkg.NewText("---", 20).
+				Align(ebitenpkg.AlignTop).
+				Move(0, 30).
+				SetColor(color.White),
+		).
 		Align(ebitenpkg.AlignCenter).
 		Move(400, 400).
 		Scale(5, 5).
@@ -71,12 +81,6 @@ func NewGame() ebiten.Game {
 			},
 		})
 
-	pikachuSpriteName := ebitenpkg.NewText("Pikachu", 20).
-		Align(ebitenpkg.AlignBottom).
-		Move(0, -30).
-		SetColor(color.White).
-		Attach(pikachuSprite)
-
 	pikachuIdle := ebitenpkg.NewImage(helper.PikachuAnimeImage()).
 		Align(ebitenpkg.AlignCenter).
 		Move(200, 200).
@@ -93,11 +97,10 @@ func NewGame() ebiten.Game {
 		})
 
 	return &Game{
-		Space:             space,
-		Gopher:            gopher,
-		PikachuSprite:     pikachuSprite,
-		PikachuSpriteName: pikachuSpriteName,
-		PikachuIdle:       pikachuIdle,
+		Space:         space,
+		Gopher:        gopher,
+		PikachuSprite: pikachuSprite,
+		PikachuIdle:   pikachuIdle,
 		Walls: []ebitenpkg.Image{
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(20, 0).Collidable(space, TypeWall),
 			ebitenpkg.NewImage(ebiten.NewImage(10, int(fH))).Align(ebitenpkg.AlignTop).Move(fW-20, 0).Collidable(space, TypeWall),
@@ -107,6 +110,7 @@ func NewGame() ebiten.Game {
 }
 
 func (g *Game) Update() error {
+	logs.Debug("update")
 	/* update game ticker */
 	ebitenpkg.GameUpdate()
 	g.Space.GameUpdate()
@@ -140,6 +144,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	logs.Debug("draw")
 	/* draw game objects */
 	g.Gopher.Draw(screen)
 	g.PikachuSprite.Draw(screen)

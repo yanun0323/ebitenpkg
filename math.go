@@ -97,7 +97,7 @@ func scaleVector(center, target, scale Vector) Vector {
 	return target
 }
 
-func getVertexes(w, h float64, ctr coords, pr ...attachable) []Vector {
+func getVertexes(w, h float64, ctr coords, pr ...Attachable) []Vector {
 	result := ctr.Aligned().vertexRatio()
 
 	mX, mY := ctr.Moved()
@@ -141,7 +141,7 @@ func getVertexes(w, h float64, ctr coords, pr ...attachable) []Vector {
 	return result
 }
 
-func getDrawOption(w, h int, current controller, tempScaleX, tempScaleY float64, pr ...attachable) *ebiten.DrawImageOptions {
+func getDrawOption(w, h int, current controller, tempScaleX, tempScaleY float64, pr ...Attachable) *ebiten.DrawImageOptions {
 	mX, mY := current.GetMove()
 	oX, oY := current.GetAlign().barycenterOffset(float64(w), float64(h))
 	sX, sY := current.GetScale()

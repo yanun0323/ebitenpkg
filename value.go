@@ -6,16 +6,13 @@ import (
 
 type value[T any] struct {
 	defaultValue T
-	value        *atomic.Value
-	hasValue     *atomic.Value
+	value        atomic.Value
+	hasValue     atomic.Value
 }
 
 // newValue panics if val is nil
-func newValue[T any](val ...T) *value[T] {
-	result := &value[T]{
-		value:    &atomic.Value{},
-		hasValue: &atomic.Value{},
-	}
+func newValue[T any](val ...T) value[T] {
+	result := value[T]{}
 
 	if len(val) != 0 {
 		result.Store(val[0])
