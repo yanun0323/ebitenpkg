@@ -15,8 +15,8 @@ func NewEbitenImage(w, h int, clr ...color.Color) *ebiten.Image {
 	return img
 }
 
-func NewEbitenImageWith(b func() (int, int), clr ...color.Color) *ebiten.Image {
-	w, h := b()
+func NewEbitenImageFromBounds(bounds func() (int, int), clr ...color.Color) *ebiten.Image {
+	w, h := bounds()
 	return NewEbitenImage(w, h, clr...)
 }
 
@@ -30,7 +30,7 @@ func NewCanvas(w, h int, clr ...color.Color) *canvas {
 	}
 }
 
-func (i *canvas) DrawOn(top *ebiten.Image, x, y float64) *canvas {
+func (i *canvas) DrawImageOn(top *ebiten.Image, x, y float64) *canvas {
 	opt := &ebiten.DrawImageOptions{}
 	opt.GeoM.Translate(x, y)
 	i.base.DrawImage(top, opt)
@@ -38,8 +38,8 @@ func (i *canvas) DrawOn(top *ebiten.Image, x, y float64) *canvas {
 	return i
 }
 
-func (i *canvas) DrawImageOn(w, h int, clr color.Color, x, y float64) *canvas {
-	i.DrawOn(NewEbitenImage(w, h, clr), x, y)
+func (i *canvas) DrawRectOn(w, h int, clr color.Color, x, y float64) *canvas {
+	i.DrawImageOn(NewEbitenImage(w, h, clr), x, y)
 
 	return i
 }

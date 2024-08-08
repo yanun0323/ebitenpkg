@@ -52,7 +52,7 @@ func NewImage(img image.Image) Image {
 	}
 }
 
-func NewImageWith(w, h int, clr ...color.Color) Image {
+func NewRectangle(w, h int, clr ...color.Color) Image {
 	return &eImage{
 		id:          newID(),
 		image:       NewEbitenImage(w, h, clr...),
@@ -189,7 +189,7 @@ func (e *eImage) Debug(on ...bool) Image {
 		return e
 	}
 
-	e.debug = NewEbitenImageWith(e.Bounds, DefaultDebugColor())
+	e.debug = NewEbitenImageFromBounds(e.Bounds, DefaultDebugColor())
 	return e
 }
 

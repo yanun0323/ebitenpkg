@@ -120,7 +120,7 @@ func (e *eText) Debug(on ...bool) Text {
 		return e
 	}
 
-	e.debug.Store(NewEbitenImageWith(e.Bounds, DefaultDebugColor()))
+	e.debug.Store(NewEbitenImageFromBounds(e.Bounds, DefaultDebugColor()))
 	return e
 }
 
