@@ -54,7 +54,7 @@ func NewGame() ebiten.Game {
 				SetColor(color.White),
 			ebitenpkg.NewText("---", 20).
 				Align(ebitenpkg.AlignTop).
-				Move(0, 30).
+				Move(0, 10).
 				SetColor(color.White),
 		).
 		Align(ebitenpkg.AlignCenter).
