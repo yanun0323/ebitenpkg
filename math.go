@@ -152,19 +152,26 @@ func getDrawOption(w, h int, current controller, tempScaleX, tempScaleY float64,
 	opt.GeoM.Scale(tempScaleX, tempScaleY)
 	opt.GeoM.Rotate(current.GetRotate() / _radianToDegree)
 
-	if len(pr) != 0 && pr[0] != nil {
-		pmX, pmY := pr[0].Moved()
-		opt.GeoM.Translate(pmX, pmY)
+	var recursive func(...Attachable)
+	recursive = func(pr ...Attachable) {
+		if len(pr) != 0 && pr[0] != nil {
+			recursive(pr[0].Parent())
 
-		psX, psY := pr[0].Scaled()
-		if psX < 0 {
-			mX = -mX
-		}
+			pmX, pmY := pr[0].Moved()
+			opt.GeoM.Translate(pmX, pmY)
 
-		if psY < 0 {
-			mY = -mY
+			psX, psY := pr[0].Scaled()
+			if psX < 0 {
+				mX = -mX
+			}
+
+			if psY < 0 {
+				mY = -mY
+			}
 		}
 	}
+
+	recursive(pr...)
 
 	opt.GeoM.Translate(mX, mY)
 	return opt

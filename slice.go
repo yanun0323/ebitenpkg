@@ -7,6 +7,13 @@ type slices[T any] struct {
 	slice []T
 }
 
+func (s *slices[T]) Len() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return len(s.slice)
+}
+
 func (s *slices[T]) Get(index int) (T, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -37,14 +44,15 @@ func (s *slices[T]) Delete(index int) (T, bool) {
 	return value, true
 }
 
-func (s *slices[T]) Range(f func(index int, value T) bool) {
+func (s *slices[T]) Range(next func(index int, value T) bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	for i, v := range s.slice {
-		if !f(i, v) {
-			break
+		if next(i, v) {
+			continue
 		}
+		break
 	}
 }
 

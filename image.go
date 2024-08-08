@@ -93,14 +93,14 @@ type eImage struct {
 	debug value[*ebiten.Image]
 }
 
-func (e *eImage) Draw(screen *ebiten.Image) {
-	defer func() {
-		e.children.Range(func(_ int, c Attachable) bool {
-			c.Draw(screen)
-			return true
-		})
-	}()
+func (e *eImage) drawChildren(screen *ebiten.Image) {
+	e.children.Range(func(_ int, c Attachable) bool {
+		c.Draw(screen)
+		return true
+	})
+}
 
+func (e *eImage) Draw(screen *ebiten.Image) {
 	spriteOption := e.spriteOption.Load()
 	if spriteOption.SpriteHandler == nil {
 		imageBounds := e.imageBounds.Load()
@@ -110,6 +110,9 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 		if debug := e.debug.Load(); debug != nil {
 			screen.DrawImage(debug, option)
 		}
+
+		e.drawChildren(screen)
+
 		return
 	}
 
@@ -140,6 +143,8 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	if debug := e.debug.Load(); debug != nil {
 		screen.DrawImage(debug, option)
 	}
+
+	e.drawChildren(screen)
 }
 
 func (e *eImage) Align(align Align) Image {

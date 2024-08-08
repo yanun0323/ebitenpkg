@@ -35,23 +35,36 @@ const (
 )
 
 func NewGame() ebiten.Game {
-	logs.Debug("new game")
 	space := ebitenpkg.NewSpace()
 	w, h := ebiten.WindowSize()
 	fW, fH := float64(w), float64(h)
 
-	gopher := ebitenpkg.NewImage(helper.GopherImage()).
-		Align(ebitenpkg.AlignCenter).
+	layer1 := ebitenpkg.NewRectangle(10, 10, color.White).Align(ebitenpkg.AlignTopLeading).Move(1, 1)
+	layer2 := ebitenpkg.NewRectangle(30, 30, color.RGBA{111, 0, 0, 111},
+		layer1,
+	).Align(ebitenpkg.AlignTopLeading).Move(3, 3)
+	layer3 := ebitenpkg.NewRectangle(50, 50, color.RGBA{111, 0, 111, 111},
+		layer2,
+	).Align(ebitenpkg.AlignTopLeading).Move(5, 5)
+
+	gopher := ebitenpkg.NewRectangle(100, 100, color.RGBA{0, 0, 111, 111},
+		layer3,
+	).
+		Align(ebitenpkg.AlignTopLeading).
 		Move(300, 300).
 		Moving(50, 100, 600, true).
 		Collidable(space, TypeOpponent)
 
 	pikachuSprite := ebitenpkg.
 		NewImage(helper.PikachuSpriteImage(),
-			ebitenpkg.NewText("Pikachu", 20).
+			ebitenpkg.NewRectangle(20, 20, color.RGBA{0, 0, 255, 255},
+				ebitenpkg.NewText("Pikachu", 20).
+					Align(ebitenpkg.AlignBottom).
+					Move(0, -30).
+					SetColor(color.White),
+			).
 				Align(ebitenpkg.AlignBottom).
-				Move(0, -30).
-				SetColor(color.White),
+				Move(0, -30),
 			ebitenpkg.NewText("---", 20).
 				Align(ebitenpkg.AlignTop).
 				Move(0, 10).
@@ -110,7 +123,6 @@ func NewGame() ebiten.Game {
 }
 
 func (g *Game) Update() error {
-	logs.Debug("update")
 	/* update game ticker */
 	ebitenpkg.GameUpdate()
 	g.Space.GameUpdate()
@@ -144,8 +156,8 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	logs.Debug("draw")
 	/* draw game objects */
+	logs.Debug("draw")
 	g.Gopher.Draw(screen)
 	g.PikachuSprite.Draw(screen)
 

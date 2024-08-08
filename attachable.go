@@ -10,6 +10,7 @@ type Attachable interface {
 
 	ID() ID
 	Draw(screen *ebiten.Image)
+	Parent() Attachable
 }
 
 func attach(parent, child Attachable) {
@@ -19,7 +20,6 @@ func attach(parent, child Attachable) {
 
 	detach(child)
 
-	logs.Debug("attach", child.ID())
 	switch p := parent.(type) {
 	case *eImage:
 		previous, ok := p.children.FindAndSwap(func(c Attachable) bool {
@@ -43,7 +43,6 @@ func attach(parent, child Attachable) {
 		logs.Fatalf("invalid attachable type: %T", p)
 	}
 
-	logs.Debug("attached", child.ID())
 	switch c := child.(type) {
 	case *eImage:
 		c.parent.Store(parent)
@@ -56,7 +55,6 @@ func attach(parent, child Attachable) {
 
 func detach(child Attachable) {
 	var cParent Attachable
-	logs.Debug("detach", child.ID())
 	switch c := child.(type) {
 	case *eImage:
 		cParent, _ = c.parent.Delete()
@@ -66,7 +64,6 @@ func detach(child Attachable) {
 		logs.Fatalf("invalid attachable type: %T", c)
 	}
 
-	logs.Debug("detached", child.ID())
 	if cParent != nil {
 		switch p := cParent.(type) {
 		case *eImage:

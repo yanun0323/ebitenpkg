@@ -40,6 +40,7 @@ type Text interface {
 	IsClick(x, y float64) bool
 
 	ID() ID
+	Parent() Attachable
 }
 
 func NewText(text string, size float64, children ...Attachable) Text {
@@ -77,14 +78,14 @@ type eText struct {
 	debug value[*ebiten.Image]
 }
 
-func (e *eText) Draw(screen *ebiten.Image) {
-	defer func() {
-		e.children.Range(func(_ int, c Attachable) bool {
-			c.Draw(screen)
-			return true
-		})
-	}()
+func (e *eText) drawChildren(screen *ebiten.Image) {
+	e.children.Range(func(_ int, c Attachable) bool {
+		c.Draw(screen)
+		return true
+	})
+}
 
+func (e *eText) Draw(screen *ebiten.Image) {
 	opt := e.drawOption()
 	opt.ColorScale.ScaleWithColor(e.GetColor())
 
@@ -96,6 +97,8 @@ func (e *eText) Draw(screen *ebiten.Image) {
 	if debug := e.debug.Load(); debug != nil {
 		screen.DrawImage(debug, opt)
 	}
+
+	e.drawChildren(screen)
 }
 
 func (e *eText) Align(align Align) Text {
@@ -241,6 +244,10 @@ func (e *eText) IsClick(x, y float64) bool {
 
 func (e *eText) ID() ID {
 	return e.id.Load()
+}
+
+func (e *eText) Parent() Attachable {
+	return e.parent.Load()
 }
 
 func (e *eText) drawOption() *ebiten.DrawImageOptions {
