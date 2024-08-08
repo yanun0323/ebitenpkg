@@ -1,39 +1,77 @@
 package ebitenpkg
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+)
 
 type value[T any] struct {
 	defaultValue T
-	value        atomic.Value
+	value        *atomic.Value
+	hasValue     *atomic.Value
 }
 
-func newValue[T any](d T) value[T] {
-	v := atomic.Value{}
-	v.Store(d)
-	return value[T]{
-		defaultValue: d,
-		value:        v,
+// newValue panics if val is nil
+func newValue[T any](val ...T) *value[T] {
+	result := &value[T]{
+		value:    &atomic.Value{},
+		hasValue: &atomic.Value{},
 	}
+
+	if len(val) != 0 {
+		result.Store(val[0])
+	}
+
+	return result
 }
 
 func (v *value[T]) Load() T {
-	value := v.value.Load()
-	if value == nil {
-		return v.defaultValue
+	if v.HasValue() {
+		value := v.value.Load()
+		if value == nil {
+			return v.defaultValue
+		}
+
+		return value.(T)
 	}
 
-	return value.(T)
+	return v.defaultValue
 }
 
-func (v *value[T]) Store(d T) {
-	v.value.Store(d)
+// Store panics if val is nil
+func (v *value[T]) Store(val T) {
+	v.value.Store(val)
+	v.hasValue.Store(true)
 }
 
-func (v *value[T]) Swap(d T) (old T) {
-	swapped := v.value.Swap(d)
+// Swap panics if val is nil
+func (v *value[T]) Swap(val T) (T, bool) {
+	swapped := v.value.Swap(val)
+	if !v.HasValue() {
+		v.hasValue.Store(true)
+		return v.defaultValue, false
+	}
+
 	if swapped == nil {
-		return v.defaultValue
+		return v.defaultValue, false
 	}
 
-	return swapped.(T)
+	return swapped.(T), true
+}
+
+func (v *value[T]) Delete() (T, bool) {
+	if v.HasValue() {
+		v.hasValue.Store(false)
+		return v.Load(), true
+	}
+
+	return v.defaultValue, false
+}
+
+func (v *value[T]) HasValue() bool {
+	ok := v.hasValue.Load()
+	if ok == nil {
+		return false
+	}
+
+	return ok.(bool)
 }

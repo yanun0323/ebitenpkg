@@ -37,10 +37,10 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 	}
 
 	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
-
 	if rp || ctr.movementAddition == nil {
 		ctr.movementAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+
 	ctr.movementAddition <- add
 }
 
@@ -58,10 +58,10 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 	}
 
 	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0])
-
 	if rp || ctr.rotationAddition == nil {
 		ctr.rotationAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+
 	ctr.rotationAddition <- add
 }
 
@@ -89,10 +89,10 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 	}
 
 	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
-
 	if rp || ctr.scaleAddition == nil {
 		ctr.scaleAddition = make(chan controllerDelta, _defaultChanCap)
 	}
+
 	ctr.scaleAddition <- add
 }
 
@@ -112,6 +112,7 @@ func (ctr *controller) GetMove() (x, y float64) {
 		cache = add.CalculateResult(tick, cache, false)
 		ctr.movementAddition <- add
 	}
+
 	ctr.movement.X, ctr.movement.Y = cache.X, cache.Y
 
 	return ctr.movement.X, ctr.movement.Y
@@ -133,6 +134,7 @@ func (ctr *controller) GetRotate() float64 {
 		cache = add.CalculateResult(tick, Vector{X: cache}, false).X
 		ctr.rotationAddition <- add
 	}
+
 	ctr.rotation = cache
 
 	return ctr.rotation
@@ -150,8 +152,8 @@ func (ctr *controller) GetScale() (x, y float64) {
 		cache = add.CalculateResult(tick, cache, true)
 		ctr.scaleAddition <- add
 	}
-	ctr.scale = cache
 
+	ctr.scale = cache
 	if ctr.scaled {
 		return ctr.scale.X, ctr.scale.Y
 	}

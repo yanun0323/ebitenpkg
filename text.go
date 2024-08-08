@@ -16,8 +16,8 @@ type Text interface {
 	Move(x, y float64, replace ...bool) Text
 	Scale(x, y float64, replace ...bool) Text
 	Rotate(angle float64, replace ...bool) Text
-	Attach(parent Attachable) Text
-	Detach() (parent Attachable)
+	Attach(parent attachable) Text
+	Detach()
 	Debug(on ...bool) Text
 
 	SetText(text string) Text
@@ -38,35 +38,57 @@ type Text interface {
 	GetColor() color.Color
 	GetLineSpacing() float64
 	IsClick(x, y float64) bool
+
+	ID() ID
 }
 
-func NewText(text string, size float64) Text {
-	return &eText{
+func NewText(text string, size float64, children ...attachable) Text {
+	result := &eText{
+		id:          newValue(newID()),
+		parent:      newValue[attachable](),
+		children:    &maps[ID, attachable]{},
 		text:        newValue(text),
 		size:        newValue(size),
-		face:        newValue(newFace(size, DefaultFont())),
 		color:       newValue(color.RGBA64{}),
 		lineSpacing: newValue(0.0),
+		face:        newValue(newFace(size, DefaultFont())),
 		font:        newValue(DefaultFont()),
+		debug:       newValue[*ebiten.Image](),
 	}
+
+	for _, s := range children {
+		attach(result, s)
+	}
+
+	return result
 }
 
 type eText struct {
 	controller
+	id *value[ID]
 
-	parent value[Attachable]
-	debug  value[*ebiten.Image]
+	parent   *value[attachable]
+	children *maps[ID, attachable]
 
-	text        value[string]
-	size        value[float64]
-	color       value[color.RGBA64]
-	lineSpacing value[float64]
-	face        value[text.Face]
-	font        value[*text.GoTextFaceSource]
+	text        *value[string]
+	size        *value[float64]
+	color       *value[color.RGBA64]
+	lineSpacing *value[float64]
+	face        *value[text.Face]
+	font        *value[*text.GoTextFaceSource]
+
+	debug *value[*ebiten.Image]
 }
 
 func (e *eText) Draw(screen *ebiten.Image) {
-	opt := e.DrawOption()
+	defer func() {
+		e.children.Range(func(id ID, c attachable) bool {
+			c.Draw(screen)
+			return true
+		})
+	}()
+
+	opt := e.drawOption()
 	opt.ColorScale.ScaleWithColor(e.GetColor())
 
 	text.Draw(screen, e.GetText(), e.Face(), &text.DrawOptions{
@@ -99,14 +121,13 @@ func (e *eText) Rotate(angle float64, replace ...bool) Text {
 	return e
 }
 
-func (e *eText) Attach(parent Attachable) Text {
-	e.parent.Store(parent)
+func (e *eText) Attach(parent attachable) Text {
+	attach(parent, e)
 	return e
 }
 
-func (e *eText) Detach() (parent Attachable) {
-	e.parent.Store(nil)
-	return e
+func (e *eText) Detach() {
+	detach(e)
 }
 
 func (e *eText) Debug(on ...bool) Text {
@@ -221,14 +242,18 @@ func (e *eText) IsClick(x, y float64) bool {
 	return isInside(vertexes, Vector{X: x, Y: y})
 }
 
-func (e *eText) DrawOption() *ebiten.DrawImageOptions {
+func (e *eText) ID() ID {
+	return e.id.Load()
+}
+
+func (e *eText) drawOption() *ebiten.DrawImageOptions {
 	w, h := e.Bounds()
 	return getDrawOption(w, h, e.controller, 1, 1, e.parent.Load())
 }
 
 func (e *eText) resetDebug() {
 	if debug := e.debug.Load(); debug != nil {
-		e.debug.Store(nil)
+		e.debug.Delete()
 	}
 }
 

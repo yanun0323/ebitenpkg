@@ -43,7 +43,6 @@ func NewGame() ebiten.Game {
 		Align(ebitenpkg.AlignCenter).
 		Move(300, 300).
 		Moving(50, 100, 600, true).
-		// Scaling(-1, 1, 300, true).
 		Collidable(space, TypeOpponent)
 
 	pikachuSprite := ebitenpkg.
@@ -144,7 +143,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	/* draw game objects */
 	g.Gopher.Draw(screen)
 	g.PikachuSprite.Draw(screen)
-	g.PikachuSpriteName.Draw(screen)
+
 	g.PikachuIdle.Draw(screen)
 	g.GameInfo.Draw(screen)
 	for _, w := range g.Walls {

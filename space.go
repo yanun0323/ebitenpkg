@@ -11,12 +11,12 @@ type Space interface {
 }
 
 type Collidable interface {
-	Attachable
+	coords
 
-	CollisionID() ID
-	CollisionGroup() int
+	ID() ID
+	Group() int
 	Bounds() (w, h int)
-	Parent() Attachable
+	Parent() attachable
 }
 
 type space struct {
@@ -45,15 +45,15 @@ func (s *space) GameUpdate() {
 
 	for i := range bs {
 		for j := i; j < len(bs); j++ {
-			if bs[i].CollisionGroup() == bs[j].CollisionGroup() {
+			if bs[i].Group() == bs[j].Group() {
 				continue
 			}
 
 			iv := s.getVertexes(bs[i])
 			jv := s.getVertexes(bs[j])
 			if isOverlap(iv, jv) || gjk(iv, jv) {
-				collided[bs[i].CollisionID()] = append(collided[bs[i].CollisionID()], bs[j])
-				collided[bs[j].CollisionID()] = append(collided[bs[j].CollisionID()], bs[i])
+				collided[bs[i].ID()] = append(collided[bs[i].ID()], bs[j])
+				collided[bs[j].ID()] = append(collided[bs[j].ID()], bs[i])
 			}
 		}
 	}
@@ -70,7 +70,7 @@ func (s *space) AddBody(c Collidable) Space {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.bodies[c.CollisionID()] = c
+	s.bodies[c.ID()] = c
 	return s
 }
 
@@ -78,7 +78,7 @@ func (s *space) RemoveBody(c Collidable) Space {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.bodies, c.CollisionID())
+	delete(s.bodies, c.ID())
 	return s
 }
 
@@ -86,13 +86,13 @@ func (s *space) IsCollided(c Collidable) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return len(s.collided) != 0 && len(s.collided[c.CollisionID()]) != 0
+	return len(s.collided) != 0 && len(s.collided[c.ID()]) != 0
 }
 
 func (s *space) GetCollided(c Collidable) []Collidable {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	cs := s.collided[c.CollisionID()]
+	cs := s.collided[c.ID()]
 	result := make([]Collidable, len(cs))
 
 	copy(result, cs)

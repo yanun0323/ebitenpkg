@@ -87,9 +87,20 @@ func DefaultTextDpi() float64 {
 	Default Debug Color
 */
 
-var _defaultDebugColor = newValue(color.RGBA64{G: 0xffff >> 1, A: 0xffff >> 1})
+var (
+	_defaultDebugColor = newValue(defaultDebugColor())
+)
+
+func defaultDebugColor() color.RGBA64 {
+	return color.RGBA64{G: 0xffff >> 1, A: 0xffff >> 1}
+}
 
 func SetDefaultDebugColor(clr color.Color) {
+	if clr == nil {
+		_defaultDebugColor.Store(defaultDebugColor())
+		return
+	}
+
 	r, g, b, a := clr.RGBA()
 	_defaultDebugColor.Store(color.RGBA64{R: uint16(r), G: uint16(g), B: uint16(b), A: uint16(a)})
 }
@@ -102,7 +113,7 @@ func DefaultDebugColor() color.Color {
 	Default Font
 */
 
-var _defaultFont = newValue[*text.GoTextFaceSource](defaultFont())
+var _defaultFont = newValue(defaultFont())
 
 func defaultFont() *text.GoTextFaceSource {
 	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
@@ -118,6 +129,11 @@ func defaultFont() *text.GoTextFaceSource {
 }
 
 func SetDefaultFont(fonts []byte) {
+	if len(fonts) == 0 {
+		_defaultFont.Store(defaultFont())
+		return
+	}
+
 	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts))
 	if err != nil {
 		logs.Fatalf("failed to load default font: %v", err)

@@ -18,8 +18,8 @@ type Image interface {
 	Rotate(angle float64, replace ...bool) Image
 	Rotating(angle float64, tick int, replace ...bool) Image
 	Spriteable(SpriteSheetOption) Image
-	Attach(parent Attachable) Image
-	Detach() (parent Attachable)
+	Attach(parent attachable) Image
+	Detach()
 	Collidable(space Space, group int) Image
 	Debug(on ...bool) Image
 	HandleImage(handler func(*ebiten.Image)) Image
@@ -32,9 +32,9 @@ type Image interface {
 	Debugged() bool
 	SpriteSheet() (SpriteSheetOption, bool)
 
-	CollisionID() ID
-	CollisionGroup() int
-	Parent() Attachable
+	ID() ID
+	Group() int
+	Parent() attachable
 	IsClick(x, y float64) bool
 }
 
@@ -44,43 +44,81 @@ type SpriteSheetOption struct {
 	SpriteHandler     func(fps, timestamp int, direction Direction) (indexX, indexY, scaleX, scaleY int)
 }
 
-func NewImage(img image.Image) Image {
-	return &eImage{
-		id:          newValue(newID()),
-		image:       newValue(ebiten.NewImageFromImage(img)),
-		imageBounds: newValue(img.Bounds()),
+func NewImage(img image.Image, children ...attachable) Image {
+	result := &eImage{
+		id:             newValue(newID()),
+		image:          newValue(ebiten.NewImageFromImage(img)),
+		imageBounds:    newValue(img.Bounds()),
+		draw:           newValue[*ebiten.Image](),
+		drawCoords:     newValue[image.Point](),
+		drawScale:      newValue[image.Point](),
+		spriteOption:   newValue[SpriteSheetOption](),
+		parent:         newValue[attachable](),
+		children:       &maps[ID, attachable]{},
+		collisionSpace: newValue[Space](),
+		collisionGroup: newValue[int](),
+		debug:          newValue[*ebiten.Image](),
 	}
+
+	for _, s := range children {
+		attach(result, s)
+	}
+
+	return result
 }
 
-func NewRectangle(w, h int, clr ...color.Color) Image {
-	return &eImage{
-		id:          newValue(newID()),
-		image:       newValue(NewEbitenImage(w, h, clr...)),
-		imageBounds: newValue(image.Rect(0, 0, w, h)),
+func NewRectangle(w, h int, clr color.Color, children ...attachable) Image {
+	result := &eImage{
+		id:             newValue(newID()),
+		image:          newValue(NewEbitenImage(w, h, clr)),
+		imageBounds:    newValue(image.Rect(0, 0, w, h)),
+		draw:           newValue[*ebiten.Image](),
+		drawCoords:     newValue[image.Point](),
+		drawScale:      newValue[image.Point](),
+		spriteOption:   newValue[SpriteSheetOption](),
+		parent:         newValue[attachable](),
+		children:       &maps[ID, attachable]{},
+		collisionSpace: newValue[Space](),
+		collisionGroup: newValue[int](),
+		debug:          newValue[*ebiten.Image](),
 	}
+
+	for _, s := range children {
+		attach(result, s)
+	}
+
+	return result
 }
 
 type eImage struct {
 	controller
-	id value[ID]
+	id *value[ID]
 
-	image       value[*ebiten.Image]
-	imageBounds value[image.Rectangle]
-	draw        value[*ebiten.Image]
-	drawCoords  value[image.Point]
-	drawScale   value[image.Point]
+	image       *value[*ebiten.Image]
+	imageBounds *value[image.Rectangle]
+	draw        *value[*ebiten.Image]
+	drawCoords  *value[image.Point]
+	drawScale   *value[image.Point]
 
-	spriteOption value[SpriteSheetOption]
+	spriteOption *value[SpriteSheetOption]
 
-	parent value[Attachable]
+	parent   *value[attachable]
+	children *maps[ID, attachable]
 
-	collisionSpace value[Space]
-	collisionGroup value[int]
+	collisionSpace *value[Space]
+	collisionGroup *value[int]
 
-	debug value[*ebiten.Image]
+	debug *value[*ebiten.Image]
 }
 
 func (e *eImage) Draw(screen *ebiten.Image) {
+	defer func() {
+		e.children.Range(func(id ID, c attachable) bool {
+			c.Draw(screen)
+			return true
+		})
+	}()
+
 	spriteOption := e.spriteOption.Load()
 	if spriteOption.SpriteHandler == nil {
 		imageBounds := e.imageBounds.Load()
@@ -162,13 +200,13 @@ func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
 	return e
 }
 
-func (e *eImage) Attach(parent Attachable) Image {
-	e.parent.Store(parent)
+func (e *eImage) Attach(parent attachable) Image {
+	attach(parent, e)
 	return e
 }
 
-func (e *eImage) Detach() (parent Attachable) {
-	return e.parent.Swap(nil)
+func (e *eImage) Detach() {
+	detach(e)
 }
 
 func (e *eImage) Collidable(space Space, group int) Image {
@@ -183,13 +221,12 @@ func (e *eImage) Collidable(space Space, group int) Image {
 }
 
 func (e *eImage) Debug(on ...bool) Image {
-	debug := e.debug.Load()
 	if len(on) != 0 && !on[0] {
-		e.debug.Store(nil)
+		e.debug.Delete()
 		return e
 	}
 
-	if debug != nil {
+	if e.debug.Load() != nil {
 		return e
 	}
 
@@ -237,15 +274,15 @@ func (e *eImage) SpriteSheet() (SpriteSheetOption, bool) {
 	return opt, opt.SpriteHandler != nil
 }
 
-func (e *eImage) CollisionID() ID {
+func (e *eImage) ID() ID {
 	return e.id.Load()
 }
 
-func (e *eImage) CollisionGroup() int {
+func (e *eImage) Group() int {
 	return e.collisionGroup.Load()
 }
 
-func (e *eImage) Parent() Attachable {
+func (e *eImage) Parent() attachable {
 	return e.parent.Load()
 }
 
