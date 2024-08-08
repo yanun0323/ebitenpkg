@@ -22,6 +22,7 @@ type Image interface {
 	Detach() (parent Attachable)
 	Collidable(space Space, group int) Image
 	Debug(on ...bool) Image
+	HandleImage(handler func(*ebiten.Image)) Image
 
 	Bounds() (width int, height int)
 	Aligned() Align
@@ -98,7 +99,7 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 		draw := e.draw.Load()
 		drawCoords := e.drawCoords.Load()
 		drawScale := e.drawScale.Load()
-		if e.draw.Load() == nil || x != drawCoords.X || y != drawCoords.Y || sX != drawScale.X || sY != drawScale.Y {
+		if draw == nil || x != drawCoords.X || y != drawCoords.Y || sX != drawScale.X || sY != drawScale.Y {
 			oX, oY := x*sW, y*sH
 
 			rect := image.Rect(oX, oY, oX+sW, oY+sH)
@@ -193,6 +194,11 @@ func (e *eImage) Debug(on ...bool) Image {
 	}
 
 	e.debug.Store(NewEbitenImageFromBounds(e.Bounds, DefaultDebugColor()))
+	return e
+}
+
+func (e *eImage) HandleImage(handler func(*ebiten.Image)) Image {
+	handler(e.image.Load())
 	return e
 }
 
