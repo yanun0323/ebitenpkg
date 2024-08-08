@@ -72,6 +72,20 @@ func NewRectangle(w, h int, clr color.Color, children ...Attachable) Image {
 	return result
 }
 
+func NewRoundedRectangle(w, h, round int, clr color.Color, children ...Attachable) Image {
+	result := &eImage{
+		id:          newValue(newID()),
+		image:       newValue(NewEbitenRoundedImage(w, h, round, clr)),
+		imageBounds: newValue(image.Rect(0, 0, w, h)),
+	}
+
+	for _, s := range children {
+		attach(result, s)
+	}
+
+	return result
+}
+
 type eImage struct {
 	controller
 	id value[ID]

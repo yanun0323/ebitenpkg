@@ -45,9 +45,9 @@ func NewGame() ebiten.Game {
 	).Align(ebitenpkg.AlignTopLeading).Move(3, 3)
 	layer3 := ebitenpkg.NewRectangle(50, 50, color.RGBA{111, 0, 111, 111},
 		layer2,
-	).Align(ebitenpkg.AlignTopLeading).Move(5, 5)
+	).Align(ebitenpkg.AlignTopLeading).Move(25, 25)
 
-	gopher := ebitenpkg.NewRectangle(100, 100, color.RGBA{0, 0, 111, 111},
+	gopher := ebitenpkg.NewRoundedRectangle(100, 100, 15, color.RGBA{0, 0, 111, 111},
 		layer3,
 	).
 		Align(ebitenpkg.AlignTopLeading).
@@ -145,12 +145,12 @@ func (g *Game) Update() error {
 	}.Update(pressed)
 
 	/* handle collision debug */
-	g.Gopher.Debug(g.Space.IsCollided(g.Gopher))
-	g.PikachuSprite.Debug(g.Space.IsCollided(g.PikachuSprite))
-	g.PikachuIdle.Debug(g.Space.IsCollided(g.PikachuIdle))
-	for _, w := range g.Walls {
-		w.Debug(g.Space.IsCollided(w))
-	}
+	// g.Gopher.Debug(g.Space.IsCollided(g.Gopher))
+	// g.PikachuSprite.Debug(g.Space.IsCollided(g.PikachuSprite))
+	// g.PikachuIdle.Debug(g.Space.IsCollided(g.PikachuIdle))
+	// for _, w := range g.Walls {
+	// 	w.Debug(g.Space.IsCollided(w))
+	// }
 
 	return nil
 }

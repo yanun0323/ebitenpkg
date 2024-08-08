@@ -15,6 +15,55 @@ func NewEbitenImage(w, h int, clr ...color.Color) *ebiten.Image {
 	return img
 }
 
+func NewEbitenRoundedImage(w, h int, round int, clr ...color.Color) *ebiten.Image {
+	img := NewEbitenImage(w, h, clr...)
+	for x := 0; x < round; x++ {
+		// left-top
+		ltX, ltY := round, round
+		for y := 0; y < round; y++ {
+			dx := x - ltX
+			dy := y - ltY
+			if dx*dx+dy*dy > round*round {
+				img.Set(x, y, color.Transparent)
+			}
+		}
+
+		// left-bottom
+		lbX, lbY := round, h-round
+		for y := h - round; y < h; y++ {
+			dx := x - lbX
+			dy := y - lbY
+			if dx*dx+dy*dy > round*round {
+				img.Set(x, y, color.Transparent)
+			}
+		}
+	}
+
+	for x := w - round; x < w; x++ {
+		// right-top
+		rtX, rtY := w-round, round
+		for y := 0; y < round; y++ {
+			dx := x - rtX
+			dy := y - rtY
+			if dx*dx+dy*dy > round*round {
+				img.Set(x, y, color.Transparent)
+			}
+		}
+
+		// right-bottom
+		rbX, rbY := w-round, h-round
+		for y := h - round; y < h; y++ {
+			dx := x - rbX
+			dy := y - rbY
+			if dx*dx+dy*dy > round*round {
+				img.Set(x, y, color.Transparent)
+			}
+		}
+	}
+
+	return img
+}
+
 func NewEbitenImageFromBounds(bounds func() (int, int), clr ...color.Color) *ebiten.Image {
 	w, h := bounds()
 	return NewEbitenImage(w, h, clr...)
