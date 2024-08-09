@@ -118,7 +118,7 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	spriteOption := e.spriteOption.Load()
 	if spriteOption.SpriteHandler == nil {
 		imageBounds := e.imageBounds.Load()
-		option := getDrawOption(imageBounds.Dx(), imageBounds.Dy(), e.controller, 1, 1, e.Parent())
+		option := getDrawOption(imageBounds.Dx(), imageBounds.Dy(), &e.controller, 1, 1, e.Parent())
 		screen.DrawImage(e.image.Load(), option)
 
 		if debug := e.debug.Load(); debug != nil {
@@ -148,7 +148,7 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 		e.drawScale.Store(image.Point{X: sX, Y: sY})
 	}
 
-	option := getDrawOption(sW, sH, e.controller, float64(sX), float64(sY), e.Parent())
+	option := getDrawOption(sW, sH, &e.controller, float64(sX), float64(sY), e.Parent())
 
 	if draw := e.draw.Load(); draw != nil {
 		screen.DrawImage(draw, option)

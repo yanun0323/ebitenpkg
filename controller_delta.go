@@ -1,6 +1,11 @@
 package ebitenpkg
 
+import (
+	"sync"
+)
+
 type controllerDelta struct {
+	mu         sync.RWMutex
 	tick       int
 	targetTick int
 	lastTick   int
@@ -9,7 +14,7 @@ type controllerDelta struct {
 	tickResult Vector /* for replace */
 }
 
-func newControllerDelta(x, y float64, tick int, rp bool) (add controllerDelta, replace bool) {
+func newControllerDelta(x, y float64, tick int, rp bool) (add *controllerDelta, replace bool) {
 	var (
 		current = CurrentGameTime()
 		delta   Vector
@@ -22,7 +27,7 @@ func newControllerDelta(x, y float64, tick int, rp bool) (add controllerDelta, r
 		delta = Vector{X: x / float64(tick), Y: y / float64(tick)}
 	}
 
-	return controllerDelta{
+	return &controllerDelta{
 		tick:       tick,
 		targetTick: current + tick,
 		lastTick:   current,
@@ -33,12 +38,17 @@ func newControllerDelta(x, y float64, tick int, rp bool) (add controllerDelta, r
 }
 
 func (c *controllerDelta) IsComplete() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.lastTick >= c.targetTick
 }
 
 func (c *controllerDelta) CalculateResult(currentTick int, value Vector, isScale bool) Vector {
 	offset := c.getTickerOffset(currentTick)
-	if offset <= 0 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if offset <= _floatFix {
 		return value
 	}
 
@@ -51,31 +61,30 @@ func (c *controllerDelta) CalculateResult(currentTick int, value Vector, isScale
 		return result
 	}
 
-	if isScale {
-		return Vector{
-			X: value.X + c.tickDelta.X*offset,
-			Y: value.Y + c.tickDelta.Y*offset,
-		}
-	}
-
-	return Vector{
+	result := Vector{
 		X: value.X + c.tickDelta.X*offset,
 		Y: value.Y + c.tickDelta.Y*offset,
 	}
+
+	return result
 }
 
 func (c *controllerDelta) getTickerOffset(currentTick int) float64 {
-	defer func() {
-		c.lastTick = currentTick
-	}()
-
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.replace {
-		return float64(c.targetTick - c.lastTick)
+		result := float64(c.targetTick - c.lastTick)
+		c.lastTick = currentTick
+		return result
 	}
 
+	var result float64
 	if currentTick >= c.targetTick {
-		return float64(c.targetTick - c.lastTick)
+		result = float64(c.targetTick - c.lastTick)
 	} else {
-		return float64(currentTick - c.lastTick)
+		result = float64(currentTick - c.lastTick)
 	}
+
+	c.lastTick = currentTick
+	return result
 }

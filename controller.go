@@ -1,5 +1,9 @@
 package ebitenpkg
 
+import (
+	"github.com/yanun0323/pkg/logs"
+)
+
 // controller controls the movement of an object.
 //
 // It can be used to move an object, rotate it, scale it, and align it.
@@ -9,12 +13,12 @@ type controller struct {
 	direction        Direction
 	align            Align
 	movement         Vector
-	movementAddition chan controllerDelta
+	movementAddition chan *controllerDelta
 	scaled           bool /* for init scale */
 	scale            Vector
-	scaleAddition    chan controllerDelta
+	scaleAddition    chan *controllerDelta
 	rotation         float64
-	rotationAddition chan controllerDelta
+	rotationAddition chan *controllerDelta
 }
 
 func (ctr *controller) SetAlign(a Align) {
@@ -38,7 +42,7 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 
 	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
 	if rp || ctr.movementAddition == nil {
-		ctr.movementAddition = make(chan controllerDelta, _defaultChanCap)
+		ctr.movementAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
 
 	ctr.movementAddition <- add
@@ -59,7 +63,7 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 
 	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0])
 	if rp || ctr.rotationAddition == nil {
-		ctr.rotationAddition = make(chan controllerDelta, _defaultChanCap)
+		ctr.rotationAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
 
 	ctr.rotationAddition <- add
@@ -90,7 +94,7 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 
 	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
 	if rp || ctr.scaleAddition == nil {
-		ctr.scaleAddition = make(chan controllerDelta, _defaultChanCap)
+		ctr.scaleAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
 
 	ctr.scaleAddition <- add
@@ -106,6 +110,7 @@ func (ctr *controller) GetMove() (x, y float64) {
 	for i := len(ctr.movementAddition) - 1; i >= 0; i-- {
 		add := <-ctr.movementAddition
 		if add.IsComplete() {
+			logs.Warn("mv is completed")
 			continue
 		}
 

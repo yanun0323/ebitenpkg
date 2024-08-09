@@ -252,7 +252,7 @@ func (e *eText) Parent() Attachable {
 
 func (e *eText) drawOption() *ebiten.DrawImageOptions {
 	w, h := e.Bounds()
-	return getDrawOption(w, h, e.controller, 1, 1, e.parent.Load())
+	return getDrawOption(w, h, &e.controller, 1, 1, e.parent.Load())
 }
 
 func (e *eText) resetDebug() {
