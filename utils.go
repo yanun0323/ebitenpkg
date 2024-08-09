@@ -97,6 +97,6 @@ func (i *canvas) EbitenImage() *ebiten.Image {
 	return i.base
 }
 
-func (i *canvas) Image() Image {
-	return NewImage(i.base)
+func (i *canvas) Image(children ...Attachable) Image {
+	return NewImage(i.base, children...)
 }
