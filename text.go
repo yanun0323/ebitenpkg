@@ -3,10 +3,10 @@ package ebitenpkg
 import (
 	"bytes"
 	"image/color"
+	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/yanun0323/pkg/logs"
 )
 
 type Text interface {
@@ -177,11 +177,11 @@ func (e *eText) SetLineSpacing(lineSpacing float64) Text {
 func (e *eText) SetFont(font []byte) Text {
 	fs, err := text.NewGoTextFaceSource(bytes.NewReader(font))
 	if err != nil {
-		logs.Fatalf("failed to load font: %v", err)
+		log.Fatalf("failed to load font: %v", err)
 	}
 
 	if fs == nil {
-		logs.Fatalf("failed to load font")
+		log.Fatalf("failed to load font")
 	}
 
 	e.font.Store(fs)

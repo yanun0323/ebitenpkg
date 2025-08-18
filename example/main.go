@@ -3,17 +3,17 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/yanun0323/ebitenpkg"
 	"github.com/yanun0323/ebitenpkg/example/helper"
-	"github.com/yanun0323/pkg/logs"
 )
 
 func main() {
 	if err := ebiten.RunGame(NewGame()); err != nil {
-		logs.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -155,8 +155,6 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	/* draw game objects */
-	logs.Debug("draw")
-
 	g.Gopher.Draw(screen)
 	g.PikachuSprite.Draw(screen)
 

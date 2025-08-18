@@ -1,8 +1,9 @@
 package ebitenpkg
 
 import (
+	"log"
+
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/yanun0323/pkg/logs"
 )
 
 type Attachable interface {
@@ -40,7 +41,7 @@ func attach(parent, child Attachable) {
 			detach(previous)
 		}
 	default:
-		logs.Fatalf("invalid attachable type: %T", p)
+		log.Fatalf("invalid attachable type: %T", p)
 	}
 
 	switch c := child.(type) {
@@ -49,7 +50,7 @@ func attach(parent, child Attachable) {
 	case *eText:
 		c.parent.Store(parent)
 	default:
-		logs.Fatalf("invalid attachable type: %T", c)
+		log.Fatalf("invalid attachable type: %T", c)
 	}
 }
 
@@ -61,7 +62,7 @@ func detach(child Attachable) {
 	case *eText:
 		cParent, _ = c.parent.Delete()
 	default:
-		logs.Fatalf("invalid attachable type: %T", c)
+		log.Fatalf("invalid attachable type: %T", c)
 	}
 
 	if cParent != nil {
@@ -75,7 +76,7 @@ func detach(child Attachable) {
 				return c.ID() == child.ID()
 			})
 		default:
-			logs.Fatalf("invalid attachable type: %T", cParent)
+			log.Fatalf("invalid attachable type: %T", cParent)
 		}
 	}
 }

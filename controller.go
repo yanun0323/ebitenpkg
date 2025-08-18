@@ -1,9 +1,5 @@
 package ebitenpkg
 
-import (
-	"github.com/yanun0323/pkg/logs"
-)
-
 // controller controls the movement of an object.
 //
 // It can be used to move an object, rotate it, scale it, and align it.
@@ -110,7 +106,6 @@ func (ctr *controller) GetMove() (x, y float64) {
 	for i := len(ctr.movementAddition) - 1; i >= 0; i-- {
 		add := <-ctr.movementAddition
 		if add.IsComplete() {
-			logs.Warn("mv is completed")
 			continue
 		}
 

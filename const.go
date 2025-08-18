@@ -3,13 +3,13 @@ package ebitenpkg
 import (
 	"bytes"
 	"image/color"
+	"log"
 	"math"
 	"sync"
 
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/yanun0323/pkg/logs"
 )
 
 const (
@@ -118,11 +118,11 @@ var _defaultFont = newValue(defaultFont())
 func defaultFont() *text.GoTextFaceSource {
 	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
 	if err != nil {
-		logs.Fatalf("failed to load default font: %v", err)
+		log.Fatalf("failed to load default font: %v", err)
 	}
 
 	if fs == nil {
-		logs.Fatalf("failed to load default font")
+		log.Fatalf("failed to load default font")
 	}
 
 	return fs
@@ -136,11 +136,11 @@ func SetDefaultFont(fonts []byte) {
 
 	fs, err := text.NewGoTextFaceSource(bytes.NewReader(fonts))
 	if err != nil {
-		logs.Fatalf("failed to load default font: %v", err)
+		log.Fatalf("failed to load default font: %v", err)
 	}
 
 	if fs == nil {
-		logs.Fatalf("failed to load default font")
+		log.Fatalf("failed to load default font")
 	}
 
 	_defaultFont.Store(fs)
