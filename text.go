@@ -2,6 +2,7 @@ package ebitenpkg
 
 import (
 	"bytes"
+	"fmt"
 	"image/color"
 	"log"
 
@@ -20,7 +21,7 @@ type Text interface {
 	Detach()
 	Debug(on ...bool) Text
 
-	SetText(text string) Text
+	SetText(format string, args ...any) Text
 	SetSize(size float64) Text
 	SetColor(color color.Color) Text
 	SetLineSpacing(lineSpacing float64) Text
@@ -145,8 +146,8 @@ func (e *eText) Debug(on ...bool) Text {
 	return e
 }
 
-func (e *eText) SetText(text string) Text {
-	e.text.Store(text)
+func (e *eText) SetText(format string, args ...any) Text {
+	e.text.Store(fmt.Sprintf(format, args...))
 	e.resetDebug()
 
 	return e
