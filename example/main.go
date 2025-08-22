@@ -44,7 +44,7 @@ func NewGame() ebiten.Game {
 		Spriteable(ebitenpkg.SpriteSheetOption{
 			SpriteColumnCount: 1,
 			SpriteRowCount:    1,
-			SpriteCount:       1,
+			SpriteIndexCount:  1,
 			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
 				return 0, 1, 1
 			},
@@ -76,7 +76,7 @@ func NewGame() ebiten.Game {
 		Spriteable(ebitenpkg.SpriteSheetOption{
 			SpriteColumnCount: 1,
 			SpriteRowCount:    6,
-			SpriteCount:       6,
+			SpriteIndexCount:  6,
 			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
 				idx := (timestamp / 5) % 2
 				sX, sY := 1, 1
@@ -104,7 +104,7 @@ func NewGame() ebiten.Game {
 		Spriteable(ebitenpkg.SpriteSheetOption{
 			SpriteColumnCount: 24,
 			SpriteRowCount:    3,
-			SpriteCount:       58,
+			SpriteIndexCount:  58,
 			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
 				return (timestamp / 6) % fps, 1, 1
 			},

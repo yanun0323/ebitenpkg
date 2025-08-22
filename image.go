@@ -41,7 +41,7 @@ type Image interface {
 type SpriteSheetOption struct {
 	SpriteColumnCount int
 	SpriteRowCount    int
-	SpriteCount       int
+	SpriteIndexCount  int
 	SpriteHandler     func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)
 }
 
@@ -133,7 +133,7 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 
 	sW, sH := e.Bounds()
 	idx, sX, sY := spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
-	idx %= spriteOption.SpriteCount
+	idx = idx % spriteOption.SpriteIndexCount
 	x := idx % spriteOption.SpriteColumnCount
 	y := idx / spriteOption.SpriteColumnCount
 	if x >= 0 && y >= 0 {
@@ -209,8 +209,8 @@ func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
 		opt.SpriteRowCount = 1
 	}
 
-	if opt.SpriteCount == 0 {
-		opt.SpriteCount = 1
+	if opt.SpriteIndexCount == 0 {
+		opt.SpriteIndexCount = 1
 	}
 
 	e.spriteOption.Store(opt)
