@@ -17,8 +17,8 @@ type Image interface {
 	Scaling(x, y float64, tick int, replace ...bool) Image
 	Rotate(angle float64, replace ...bool) Image
 	Rotating(angle float64, tick int, replace ...bool) Image
-	Opacity(opacity float64, replace ...bool) Image
-	Opacitying(opacity float64, tick int, replace ...bool) Image
+	Color(r, g, b, a uint8) Image
+	Coloring(r, g, b, a uint8, tick int) Image
 	Spriteable(SpriteSheetOption) Image
 	Attach(parent Attachable) Image
 	Detach()
@@ -34,7 +34,7 @@ type Image interface {
 	Moved() (x, y float64)
 	Scaled() (x, y float64)
 	Rotated() (angle float64)
-	Opacityed() (opacity float64)
+	Colored() (r, g, b, a uint8)
 	Debugged() bool
 	SpriteSheet() (SpriteSheetOption, bool)
 
@@ -123,8 +123,15 @@ func (e *eImage) drawChildren(screen *ebiten.Image) {
 
 func (e *eImage) getDrawOption(w int, h int, current *controller, tempScaleX float64, tempScaleY float64, pr ...Attachable) *ebiten.DrawImageOptions {
 	opt := getDrawOption(w, h, current, tempScaleX, tempScaleY, pr...)
-	opt.ColorScale = ebiten.ColorScale{}
-	opt.ColorScale.ScaleAlpha(float32(e.GetOpacity()))
+	r, g, b, a := e.GetColor()
+	opt.ColorScale.Reset()
+	opt.ColorScale.Scale(
+		float32(r)/255,
+		float32(g)/255,
+		float32(b)/255,
+		1,
+	)
+	opt.ColorScale.ScaleAlpha(float32(a) / 255)
 	return opt
 }
 
@@ -213,13 +220,13 @@ func (e *eImage) Rotating(angle float64, tick int, replace ...bool) Image {
 	return e
 }
 
-func (e *eImage) Opacity(opacity float64, replace ...bool) Image {
-	e.controller.SetOpacity(opacity, replace...)
+func (e *eImage) Color(r, g, b, a uint8) Image {
+	e.controller.SetColor(r, g, b, a)
 	return e
 }
 
-func (e *eImage) Opacitying(opacity float64, tick int, replace ...bool) Image {
-	e.controller.SetOpacitying(opacity, tick, replace...)
+func (e *eImage) Coloring(r, g, b, a uint8, tick int) Image {
+	e.controller.SetColoring(r, g, b, a, tick)
 	return e
 }
 
@@ -314,8 +321,8 @@ func (e *eImage) Rotated() (angle float64) {
 	return e.controller.GetRotate()
 }
 
-func (e *eImage) Opacityed() (opacity float64) {
-	return e.controller.GetOpacity()
+func (e *eImage) Colored() (r, g, b, a uint8) {
+	return e.controller.GetColor()
 }
 
 func (e *eImage) Debugged() bool {

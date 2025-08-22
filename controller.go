@@ -10,15 +10,15 @@ type controller struct {
 	align            Align
 	animation        Animation
 	movement         Vector
-	movementAddition chan *controllerDelta
+	movementAddition chan *controllerDelta[Vector]
 	scaled           bool /* for init scale */
 	scale            Vector
-	scaleAddition    chan *controllerDelta
+	scaleAddition    chan *controllerDelta[Vector]
 	rotation         float64
-	rotationAddition chan *controllerDelta
-	opacitied        bool
-	opacity          float64
-	opacityAddition  chan *controllerDelta
+	rotationAddition chan *controllerDelta[Vector]
+	colored          bool
+	color            [4]uint8
+	colorAddition    chan *controllerDelta[colors]
 }
 
 func (ctr *controller) SetAlign(a Align) {
@@ -27,17 +27,17 @@ func (ctr *controller) SetAlign(a Align) {
 
 func (ctr *controller) SetAnimation(a Animation) {
 	ctr.animation = a
-	ctr.resetAnimation(ctr.movementAddition, a)
-	ctr.resetAnimation(ctr.scaleAddition, a)
-	ctr.resetAnimation(ctr.rotationAddition, a)
-	ctr.resetAnimation(ctr.opacityAddition, a)
+	resetAnimation(ctr.movementAddition, a)
+	resetAnimation(ctr.scaleAddition, a)
+	resetAnimation(ctr.rotationAddition, a)
+	resetAnimation(ctr.colorAddition, a)
 }
 
 func (ctr *controller) GetAnimation() Animation {
 	return ctr.animation
 }
 
-func (*controller) resetAnimation(ch chan *controllerDelta, a Animation) {
+func resetAnimation[T deltaValue[T]](ch chan *controllerDelta[T], a Animation) {
 	l := len(ch)
 	for i := 0; i < l; i++ {
 		c := <-ch
@@ -61,9 +61,9 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0], ctr.animation)
+	add, rp := newControllerDelta(Vector{x, y}, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.movementAddition == nil {
-		ctr.movementAddition = make(chan *controllerDelta, _defaultChanCap)
+		ctr.movementAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
 	}
 
 	ctr.movementAddition <- add
@@ -82,9 +82,9 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0], ctr.animation)
+	add, rp := newControllerDelta(Vector{X: degree}, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.rotationAddition == nil {
-		ctr.rotationAddition = make(chan *controllerDelta, _defaultChanCap)
+		ctr.rotationAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
 	}
 
 	ctr.rotationAddition <- add
@@ -113,43 +113,39 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 		ctr.scaled = true
 	}
 
-	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0], ctr.animation)
+	add, rp := newControllerDelta(Vector{x, y}, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.scaleAddition == nil {
-		ctr.scaleAddition = make(chan *controllerDelta, _defaultChanCap)
+		ctr.scaleAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
 	}
 
 	ctr.scaleAddition <- add
 }
 
-func (ctr *controller) SetOpacity(opacity float64, replace ...bool) {
-	if !ctr.opacitied {
-		ctr.opacity = 1
-		ctr.opacitied = true
+func (ctr *controller) SetColor(r, g, b, a uint8) {
+	if !ctr.colored {
+		ctr.color = [4]uint8{255, 255, 255, 255}
+		ctr.colored = true
 	}
 
-	if len(replace) != 0 && replace[0] {
-		ctr.opacity = opacity
-	} else {
-		ctr.opacity = ctr.opacity * opacity
-	}
+	ctr.color = [4]uint8{r, g, b, a}
 }
 
-func (ctr *controller) SetOpacitying(opacity float64, tick int, replace ...bool) {
+func (ctr *controller) SetColoring(r, g, b, a uint8, tick int) {
 	if tick <= 0 {
 		return
 	}
 
-	if !ctr.opacitied {
-		ctr.opacity = 1
-		ctr.opacitied = true
+	if !ctr.colored {
+		ctr.color = [4]uint8{255, 255, 255, 255}
+		ctr.colored = true
 	}
 
-	add, rp := newControllerDelta(opacity, 0, tick, len(replace) != 0 && replace[0], ctr.animation)
-	if rp || ctr.opacityAddition == nil {
-		ctr.opacityAddition = make(chan *controllerDelta, _defaultChanCap)
+	add, rp := newControllerDelta(colors{r, g, b, a}, tick, true, ctr.animation)
+	if rp || ctr.colorAddition == nil {
+		ctr.colorAddition = make(chan *controllerDelta[colors], _defaultChanCap)
 	}
 
-	ctr.opacityAddition <- add
+	ctr.colorAddition <- add
 }
 
 func (ctr *controller) GetAlign() Align {
@@ -216,29 +212,25 @@ func (ctr *controller) GetScale() (x, y float64) {
 	return ctr.scale.X, ctr.scale.Y
 }
 
-func (ctr *controller) GetOpacity() (opacity float64) {
-	if !ctr.opacitied {
-		return 1
+func (ctr *controller) GetColor() (r, g, b, a uint8) {
+	if !ctr.colored {
+		return 255, 255, 255, 255
 	}
 
 	tick := CurrentGameTime()
-	cache := ctr.opacity
-	for i := len(ctr.opacityAddition) - 1; i >= 0; i-- {
-		add := <-ctr.opacityAddition
+	cache := ctr.color
+	for i := len(ctr.colorAddition) - 1; i >= 0; i-- {
+		add := <-ctr.colorAddition
 		if add.IsComplete() {
 			continue
 		}
 
-		cache = add.CalculateResult(tick, Vector{X: cache}).X
-		ctr.opacityAddition <- add
+		cache = add.CalculateResult(tick, cache)
+		ctr.colorAddition <- add
 	}
 
-	if cache >= 1 {
-		cache = 1
-	}
-
-	ctr.opacity = cache
-	return ctr.opacity
+	ctr.color = cache
+	return ctr.color[0], ctr.color[1], ctr.color[2], ctr.color[3]
 }
 
 func (ctr *controller) GetBarycenter(parentMovement ...Vector) (float64, float64) {

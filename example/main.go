@@ -51,8 +51,8 @@ func NewGame() ebiten.Game {
 		}).
 		Move(300, 300).
 		Moving(50, 100, 3*60, true).
-		Opacity(0.1).
-		Opacitying(1, 60).
+		Color(255, 0, 0, 0).
+		Coloring(255, 255, 255, 255, 60).
 		Collidable(space, TypeOpponent).
 		Scale(1, 1)
 
@@ -149,12 +149,12 @@ func (g *Game) Update() error {
 	}.Update(pressed)
 
 	/* handle collision debug */
-	g.Gopher.Debug(g.Space.IsCollided(g.Gopher))
-	g.PikachuSprite.Debug(g.Space.IsCollided(g.PikachuSprite))
-	g.PikachuIdle.Debug(g.Space.IsCollided(g.PikachuIdle))
-	for _, w := range g.Walls {
-		w.Debug(g.Space.IsCollided(w))
-	}
+	// g.Gopher.Debug(g.Space.IsCollided(g.Gopher))
+	// g.PikachuSprite.Debug(g.Space.IsCollided(g.PikachuSprite))
+	// g.PikachuIdle.Debug(g.Space.IsCollided(g.PikachuIdle))
+	// for _, w := range g.Walls {
+	// 	w.Debug(g.Space.IsCollided(w))
+	// }
 
 	return nil
 }
