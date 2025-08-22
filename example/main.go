@@ -108,7 +108,8 @@ func NewGame() ebiten.Game {
 			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
 				return (timestamp / 6) % fps, 1, 1
 			},
-		})
+		}).
+		WithAnimation(ebitenpkg.AnimationEaseInOut())
 
 	return &Game{
 		Space:         space,

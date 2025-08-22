@@ -24,6 +24,9 @@ type Image interface {
 	Debug(on ...bool) Image
 	HandleImage(handler func(*ebiten.Image)) Image
 
+	WithAnimation(animation Animation) Image
+	Animation() Animation
+
 	Bounds() (width int, height int)
 	Aligned() Align
 	Moved() (x, y float64)
@@ -254,6 +257,15 @@ func (e *eImage) Debug(on ...bool) Image {
 func (e *eImage) HandleImage(handler func(*ebiten.Image)) Image {
 	handler(e.image.Load())
 	return e
+}
+
+func (e *eImage) WithAnimation(animation Animation) Image {
+	e.controller.SetAnimation(animation)
+	return e
+}
+
+func (e *eImage) Animation() Animation {
+	return e.GetAnimation()
 }
 
 func (e *eImage) Bounds() (width int, height int) {

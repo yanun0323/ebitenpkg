@@ -8,6 +8,7 @@ package ebitenpkg
 type controller struct {
 	direction        Direction
 	align            Align
+	animation        Animation
 	movement         Vector
 	movementAddition chan *controllerDelta
 	scaled           bool /* for init scale */
@@ -19,6 +20,26 @@ type controller struct {
 
 func (ctr *controller) SetAlign(a Align) {
 	ctr.align = a
+}
+
+func (ctr *controller) SetAnimation(a Animation) {
+	ctr.animation = a
+	ctr.resetAnimation(ctr.movementAddition, a)
+	ctr.resetAnimation(ctr.scaleAddition, a)
+	ctr.resetAnimation(ctr.rotationAddition, a)
+}
+
+func (ctr *controller) GetAnimation() Animation {
+	return ctr.animation
+}
+
+func (*controller) resetAnimation(ch chan *controllerDelta, a Animation) {
+	l := len(ch)
+	for i := 0; i < l; i++ {
+		c := <-ch
+		c.animation = a
+		ch <- c
+	}
 }
 
 func (ctr *controller) SetMove(x, y float64, replace ...bool) {
@@ -36,7 +57,7 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
+	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.movementAddition == nil {
 		ctr.movementAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
@@ -57,7 +78,7 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0])
+	add, rp := newControllerDelta(degree, 0, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.rotationAddition == nil {
 		ctr.rotationAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
@@ -88,7 +109,7 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 		ctr.scaled = true
 	}
 
-	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0])
+	add, rp := newControllerDelta(x, y, tick, len(replace) != 0 && replace[0], ctr.animation)
 	if rp || ctr.scaleAddition == nil {
 		ctr.scaleAddition = make(chan *controllerDelta, _defaultChanCap)
 	}
@@ -109,7 +130,7 @@ func (ctr *controller) GetMove() (x, y float64) {
 			continue
 		}
 
-		cache = add.CalculateResult(tick, cache, false)
+		cache = add.CalculateResult(tick, cache)
 		ctr.movementAddition <- add
 	}
 
@@ -131,7 +152,7 @@ func (ctr *controller) GetRotate() float64 {
 			continue
 		}
 
-		cache = add.CalculateResult(tick, Vector{X: cache}, false).X
+		cache = add.CalculateResult(tick, Vector{X: cache}).X
 		ctr.rotationAddition <- add
 	}
 
@@ -149,7 +170,7 @@ func (ctr *controller) GetScale() (x, y float64) {
 			continue
 		}
 
-		cache = add.CalculateResult(tick, cache, true)
+		cache = add.CalculateResult(tick, cache)
 		ctr.scaleAddition <- add
 	}
 
