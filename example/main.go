@@ -42,10 +42,11 @@ func NewGame() ebiten.Game {
 	gopher := ebitenpkg.NewImage(helper.GopherImage()).
 		Align(ebitenpkg.AlignTopLeading).
 		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteWidthCount:  1,
-			SpriteHeightCount: 1,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY, scaleX, scaleY int) {
-				return 0, 0, 1, 1
+			SpriteColumnCount: 1,
+			SpriteRowCount:    1,
+			SpriteCount:       1,
+			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
+				return 0, 1, 1
 			},
 		}).
 		Move(300, 300).
@@ -73,22 +74,23 @@ func NewGame() ebiten.Game {
 		Scale(5, 5).
 		Collidable(space, TypePlayer).
 		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteWidthCount:  1,
-			SpriteHeightCount: 6,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY, scaleX, scaleY int) {
-				x, y := 0, (timestamp/5)%2
+			SpriteColumnCount: 1,
+			SpriteRowCount:    6,
+			SpriteCount:       6,
+			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+				idx := (timestamp / 5) % 2
 				sX, sY := 1, 1
 
 				switch {
 				case direction&ebitenpkg.DirectionUp != 0:
-					y += 2
+					idx += 2
 				case direction&ebitenpkg.DirectionDown != 0:
-					y += 4
+					idx += 4
 				case direction&ebitenpkg.DirectionRight != 0:
 					sX = -1
 				}
 
-				return x, y, sX, sY
+				return idx, sX, sY
 			},
 		})
 
@@ -100,10 +102,11 @@ func NewGame() ebiten.Game {
 		Rotating(-20, 300).
 		Collidable(space, TypeOthers).
 		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteWidthCount:  1,
-			SpriteHeightCount: 6,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, indexY, scaleX, scaleY int) {
-				return 0, (timestamp / 5) % 6, 1, 1
+			SpriteColumnCount: 24,
+			SpriteRowCount:    3,
+			SpriteCount:       58,
+			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+				return (timestamp / 6) % fps, 1, 1
 			},
 		})
 

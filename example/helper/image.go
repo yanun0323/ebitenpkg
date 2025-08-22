@@ -12,7 +12,7 @@ func GopherImage() image.Image {
 }
 
 func PikachuAnimeImage() image.Image {
-	return img("pikachu_anime")
+	return img("pikachu_anime_2")
 }
 
 func PikachuSpriteImage() image.Image {

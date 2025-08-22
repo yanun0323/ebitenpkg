@@ -39,9 +39,10 @@ type Image interface {
 }
 
 type SpriteSheetOption struct {
-	SpriteWidthCount  int
-	SpriteHeightCount int
-	SpriteHandler     func(fps, timestamp int, direction Direction) (indexX, indexY, scaleX, scaleY int)
+	SpriteColumnCount int
+	SpriteRowCount    int
+	SpriteCount       int
+	SpriteHandler     func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)
 }
 
 func NewImage(img image.Image, children ...Attachable) Image {
@@ -131,7 +132,10 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	}
 
 	sW, sH := e.Bounds()
-	x, y, sX, sY := spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
+	idx, sX, sY := spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
+	idx %= spriteOption.SpriteCount
+	x := idx % spriteOption.SpriteColumnCount
+	y := idx / spriteOption.SpriteColumnCount
 	if x >= 0 && y >= 0 {
 		draw := e.draw.Load()
 		drawCoords := e.drawCoords.Load()
@@ -197,6 +201,18 @@ func (e *eImage) Rotating(angle float64, tick int, replace ...bool) Image {
 }
 
 func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
+	if opt.SpriteColumnCount == 0 {
+		opt.SpriteColumnCount = 1
+	}
+
+	if opt.SpriteRowCount == 0 {
+		opt.SpriteRowCount = 1
+	}
+
+	if opt.SpriteCount == 0 {
+		opt.SpriteCount = 1
+	}
+
 	e.spriteOption.Store(opt)
 	return e
 }
@@ -247,7 +263,7 @@ func (e *eImage) Bounds() (width int, height int) {
 		return imageBounds.Dx(), imageBounds.Dy()
 	}
 
-	return imageBounds.Dx() / opt.SpriteWidthCount, imageBounds.Dy() / opt.SpriteHeightCount
+	return imageBounds.Dx() / opt.SpriteColumnCount, imageBounds.Dy() / opt.SpriteRowCount
 }
 
 func (e *eImage) Aligned() Align {
