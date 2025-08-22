@@ -51,6 +51,8 @@ func NewGame() ebiten.Game {
 		}).
 		Move(300, 300).
 		Moving(50, 100, 3*60, true).
+		Opacity(0.1).
+		Opacitying(1, 60).
 		Collidable(space, TypeOpponent).
 		Scale(1, 1)
 

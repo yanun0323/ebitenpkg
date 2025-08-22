@@ -16,6 +16,9 @@ type controller struct {
 	scaleAddition    chan *controllerDelta
 	rotation         float64
 	rotationAddition chan *controllerDelta
+	opacitied        bool
+	opacity          float64
+	opacityAddition  chan *controllerDelta
 }
 
 func (ctr *controller) SetAlign(a Align) {
@@ -27,6 +30,7 @@ func (ctr *controller) SetAnimation(a Animation) {
 	ctr.resetAnimation(ctr.movementAddition, a)
 	ctr.resetAnimation(ctr.scaleAddition, a)
 	ctr.resetAnimation(ctr.rotationAddition, a)
+	ctr.resetAnimation(ctr.opacityAddition, a)
 }
 
 func (ctr *controller) GetAnimation() Animation {
@@ -117,6 +121,37 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 	ctr.scaleAddition <- add
 }
 
+func (ctr *controller) SetOpacity(opacity float64, replace ...bool) {
+	if !ctr.opacitied {
+		ctr.opacity = 1
+		ctr.opacitied = true
+	}
+
+	if len(replace) != 0 && replace[0] {
+		ctr.opacity = opacity
+	} else {
+		ctr.opacity = ctr.opacity * opacity
+	}
+}
+
+func (ctr *controller) SetOpacitying(opacity float64, tick int, replace ...bool) {
+	if tick <= 0 {
+		return
+	}
+
+	if !ctr.opacitied {
+		ctr.opacity = 1
+		ctr.opacitied = true
+	}
+
+	add, rp := newControllerDelta(opacity, 0, tick, len(replace) != 0 && replace[0], ctr.animation)
+	if rp || ctr.opacityAddition == nil {
+		ctr.opacityAddition = make(chan *controllerDelta, _defaultChanCap)
+	}
+
+	ctr.opacityAddition <- add
+}
+
 func (ctr *controller) GetAlign() Align {
 	return ctr.align
 }
@@ -162,6 +197,9 @@ func (ctr *controller) GetRotate() float64 {
 }
 
 func (ctr *controller) GetScale() (x, y float64) {
+	if !ctr.scaled {
+		return 1, 1
+	}
 	tick := CurrentGameTime()
 	cache := ctr.scale
 	for i := len(ctr.scaleAddition) - 1; i >= 0; i-- {
@@ -175,11 +213,32 @@ func (ctr *controller) GetScale() (x, y float64) {
 	}
 
 	ctr.scale = cache
-	if ctr.scaled {
-		return ctr.scale.X, ctr.scale.Y
+	return ctr.scale.X, ctr.scale.Y
+}
+
+func (ctr *controller) GetOpacity() (opacity float64) {
+	if !ctr.opacitied {
+		return 1
 	}
 
-	return 1, 1
+	tick := CurrentGameTime()
+	cache := ctr.opacity
+	for i := len(ctr.opacityAddition) - 1; i >= 0; i-- {
+		add := <-ctr.opacityAddition
+		if add.IsComplete() {
+			continue
+		}
+
+		cache = add.CalculateResult(tick, Vector{X: cache}).X
+		ctr.opacityAddition <- add
+	}
+
+	if cache >= 1 {
+		cache = 1
+	}
+
+	ctr.opacity = cache
+	return ctr.opacity
 }
 
 func (ctr *controller) GetBarycenter(parentMovement ...Vector) (float64, float64) {

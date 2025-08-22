@@ -17,6 +17,8 @@ type Image interface {
 	Scaling(x, y float64, tick int, replace ...bool) Image
 	Rotate(angle float64, replace ...bool) Image
 	Rotating(angle float64, tick int, replace ...bool) Image
+	Opacity(opacity float64, replace ...bool) Image
+	Opacitying(opacity float64, tick int, replace ...bool) Image
 	Spriteable(SpriteSheetOption) Image
 	Attach(parent Attachable) Image
 	Detach()
@@ -32,6 +34,7 @@ type Image interface {
 	Moved() (x, y float64)
 	Scaled() (x, y float64)
 	Rotated() (angle float64)
+	Opacityed() (opacity float64)
 	Debugged() bool
 	SpriteSheet() (SpriteSheetOption, bool)
 
@@ -118,11 +121,18 @@ func (e *eImage) drawChildren(screen *ebiten.Image) {
 	})
 }
 
+func (e *eImage) getDrawOption(w int, h int, current *controller, tempScaleX float64, tempScaleY float64, pr ...Attachable) *ebiten.DrawImageOptions {
+	opt := getDrawOption(w, h, current, tempScaleX, tempScaleY, pr...)
+	opt.ColorScale = ebiten.ColorScale{}
+	opt.ColorScale.ScaleAlpha(float32(e.GetOpacity()))
+	return opt
+}
+
 func (e *eImage) Draw(screen *ebiten.Image) {
 	spriteOption := e.spriteOption.Load()
 	if spriteOption.SpriteHandler == nil {
 		imageBounds := e.imageBounds.Load()
-		option := getDrawOption(imageBounds.Dx(), imageBounds.Dy(), &e.controller, 1, 1, e.Parent())
+		option := e.getDrawOption(imageBounds.Dx(), imageBounds.Dy(), &e.controller, 1, 1, e.Parent())
 		screen.DrawImage(e.image.Load(), option)
 
 		if debug := e.debug.Load(); debug != nil {
@@ -155,7 +165,7 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 		e.drawScale.Store(image.Point{X: sX, Y: sY})
 	}
 
-	option := getDrawOption(sW, sH, &e.controller, float64(sX), float64(sY), e.Parent())
+	option := e.getDrawOption(sW, sH, &e.controller, float64(sX), float64(sY), e.Parent())
 
 	if draw := e.draw.Load(); draw != nil {
 		screen.DrawImage(draw, option)
@@ -200,6 +210,16 @@ func (e *eImage) Rotate(angle float64, replace ...bool) Image {
 
 func (e *eImage) Rotating(angle float64, tick int, replace ...bool) Image {
 	e.controller.SetRotating(angle, tick, replace...)
+	return e
+}
+
+func (e *eImage) Opacity(opacity float64, replace ...bool) Image {
+	e.controller.SetOpacity(opacity, replace...)
+	return e
+}
+
+func (e *eImage) Opacitying(opacity float64, tick int, replace ...bool) Image {
+	e.controller.SetOpacitying(opacity, tick, replace...)
 	return e
 }
 
@@ -292,6 +312,10 @@ func (e *eImage) Scaled() (x, y float64) {
 
 func (e *eImage) Rotated() (angle float64) {
 	return e.controller.GetRotate()
+}
+
+func (e *eImage) Opacityed() (opacity float64) {
+	return e.controller.GetOpacity()
 }
 
 func (e *eImage) Debugged() bool {
