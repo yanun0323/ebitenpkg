@@ -20,6 +20,7 @@ type Image interface {
 	Color(r, g, b, a uint8) Image
 	Coloring(r, g, b, a uint8, tick int) Image
 	Spriteable(SpriteSheetOption) Image
+	SpriteableHandler(h func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)) Image
 	Attach(parent Attachable) Image
 	Detach()
 	Collidable(space Space, group int) Image
@@ -244,6 +245,14 @@ func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
 	}
 
 	e.spriteOption.Store(opt)
+	return e
+}
+
+func (e *eImage) SpriteableHandler(h func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)) Image {
+	opt := e.spriteOption.Load()
+	opt.SpriteHandler = h
+	e.spriteOption.Store(opt)
+
 	return e
 }
 
