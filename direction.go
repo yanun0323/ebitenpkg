@@ -3,6 +3,7 @@ package ebitenpkg
 type Direction int8
 
 const (
+	DirectionNone      Direction = 0
 	DirectionUp        Direction = 1 << 1
 	DirectionRight     Direction = 1 << 2
 	DirectionDown      Direction = 1 << 3
