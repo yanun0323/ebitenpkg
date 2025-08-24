@@ -18,7 +18,9 @@ func TestImage(t *testing.T) {
 		Move(0, 0).
 		Scale(1, 1).
 		Rotate(30).
-		Spriteable(SpriteSheetOption{})
+		Spriteable(SpriteableOptionCounter(1, 1, 1, func(fps, timestamp int, direction Direction) (index int, scaleX int, scaleY int) {
+			return 0, 1, 1
+		}))
 
 	img.Draw(screen)
 }

@@ -41,14 +41,9 @@ func NewGame() ebiten.Game {
 
 	gopher := ebitenpkg.NewImage(helper.GopherImage()).
 		Align(ebitenpkg.AlignTopLeading).
-		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteColumnCount: 1,
-			SpriteRowCount:    1,
-			SpriteIndexCount:  1,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
-				return 0, 1, 1
-			},
-		}).
+		Spriteable(ebitenpkg.SpriteableOptionCounter(1, 1, 1, func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
+			return 0, 1, 1
+		})).
 		Move(300, 300).
 		Moving(50, 100, 3*60, true).
 		Color(255, 0, 0, 0).
@@ -75,26 +70,21 @@ func NewGame() ebiten.Game {
 		Move(400, 400).
 		Scale(5, 5).
 		Collidable(space, TypePlayer).
-		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteColumnCount: 1,
-			SpriteRowCount:    6,
-			SpriteIndexCount:  6,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
-				idx := (timestamp / 5) % 2
-				sX, sY := 1, 1
+		Spriteable(ebitenpkg.SpriteableOptionCounter(1, 6, 6, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+			idx := (timestamp / 5) % 2
+			sX, sY := 1, 1
 
-				switch {
-				case direction&ebitenpkg.DirectionUp != 0:
-					idx += 2
-				case direction&ebitenpkg.DirectionDown != 0:
-					idx += 4
-				case direction&ebitenpkg.DirectionRight != 0:
-					sX = -1
-				}
+			switch {
+			case direction&ebitenpkg.DirectionUp != 0:
+				idx += 2
+			case direction&ebitenpkg.DirectionDown != 0:
+				idx += 4
+			case direction&ebitenpkg.DirectionRight != 0:
+				sX = -1
+			}
 
-				return idx, sX, sY
-			},
-		})
+			return idx, sX, sY
+		}))
 
 	pikachuIdle := ebitenpkg.NewImage(helper.PikachuAnimeImage()).
 		Align(ebitenpkg.AlignCenter).
@@ -103,14 +93,9 @@ func NewGame() ebiten.Game {
 		Scaling(2, 2, 300).
 		Rotating(-20, 300).
 		Collidable(space, TypeOthers).
-		Spriteable(ebitenpkg.SpriteSheetOption{
-			SpriteColumnCount: 24,
-			SpriteRowCount:    3,
-			SpriteIndexCount:  58,
-			SpriteHandler: func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
-				return (timestamp / 6) % fps, 1, 1
-			},
-		}).
+		Spriteable(ebitenpkg.SpriteableOptionCounter(24, 3, 58, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+			return (timestamp / 6) % fps, 1, 1
+		})).
 		WithAnimation(ebitenpkg.AnimationEaseInOut())
 
 	return &Game{

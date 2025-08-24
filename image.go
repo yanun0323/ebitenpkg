@@ -19,8 +19,7 @@ type Image interface {
 	Rotating(angle float64, tick int, replace ...bool) Image
 	Color(r, g, b, a uint8) Image
 	Coloring(r, g, b, a uint8, tick int) Image
-	Spriteable(SpriteSheetOption) Image
-	SpriteableHandler(h func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)) Image
+	Spriteable(SpriteableOption) Image
 	Attach(parent Attachable) Image
 	Detach()
 	Collidable(space Space, group int) Image
@@ -37,7 +36,6 @@ type Image interface {
 	Rotated() (angle float64)
 	Colored() (r, g, b, a uint8)
 	Debugged() bool
-	SpriteSheet() (SpriteSheetOption, bool)
 
 	ID() ID
 	Group() int
@@ -45,11 +43,8 @@ type Image interface {
 	IsClick(x, y float64) bool
 }
 
-type SpriteSheetOption struct {
-	SpriteColumnCount int
-	SpriteRowCount    int
-	SpriteIndexCount  int
-	SpriteHandler     func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)
+type SpriteableOption interface {
+	Mask(src image.Image, fps, timestamp int, direction Direction) (masked image.Rectangle, scaleX, scaleY int)
 }
 
 func NewImage(img image.Image, children ...Attachable) Image {
@@ -101,10 +96,10 @@ type eImage struct {
 	image       value[*ebiten.Image]
 	imageBounds value[image.Rectangle]
 	draw        value[*ebiten.Image]
-	drawCoords  value[image.Point]
+	drawCoords  value[image.Rectangle]
 	drawScale   value[image.Point]
 
-	spriteOption value[SpriteSheetOption]
+	spriteOption value[SpriteableOption]
 
 	parent   value[Attachable]
 	children slices[Attachable]
@@ -138,7 +133,7 @@ func (e *eImage) getDrawOption(w int, h int, current *controller, tempScaleX flo
 
 func (e *eImage) Draw(screen *ebiten.Image) {
 	spriteOption := e.spriteOption.Load()
-	if spriteOption.SpriteHandler == nil {
+	if spriteOption == nil {
 		imageBounds := e.imageBounds.Load()
 		option := e.getDrawOption(imageBounds.Dx(), imageBounds.Dy(), &e.controller, 1, 1, e.Parent())
 		screen.DrawImage(e.image.Load(), option)
@@ -152,28 +147,21 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	sW, sH := e.Bounds()
-	idx, sX, sY := spriteOption.SpriteHandler(ebiten.DefaultTPS, CurrentGameTime(), e.controller.GetDirection())
-	idx = idx % spriteOption.SpriteIndexCount
-	x := idx % spriteOption.SpriteColumnCount
-	y := idx / spriteOption.SpriteColumnCount
-	if x >= 0 && y >= 0 {
+	masked, sX, sY := spriteOption.Mask(e.image.Load(), ebiten.DefaultTPS, CurrentGameTime(), e.GetDirection())
+	if !masked.Empty() {
 		draw := e.draw.Load()
 		drawCoords := e.drawCoords.Load()
 		drawScale := e.drawScale.Load()
-		if draw == nil || x != drawCoords.X || y != drawCoords.Y || sX != drawScale.X || sY != drawScale.Y {
-			oX, oY := x*sW, y*sH
-
-			rect := image.Rect(oX, oY, oX+sW, oY+sH)
-			draw = e.image.Load().SubImage(rect).(*ebiten.Image)
+		if draw == nil || drawCoords != masked || drawScale.X != sX || drawScale.Y != sY {
+			draw = e.image.Load().SubImage(masked).(*ebiten.Image)
 			e.draw.Store(draw)
 		}
 
-		e.drawCoords.Store(image.Point{X: x, Y: y})
+		e.drawCoords.Store(masked)
 		e.drawScale.Store(image.Point{X: sX, Y: sY})
 	}
 
-	option := e.getDrawOption(sW, sH, &e.controller, float64(sX), float64(sY), e.Parent())
+	option := e.getDrawOption(masked.Dx(), masked.Dy(), &e.controller, float64(sX), float64(sY), e.Parent())
 
 	if draw := e.draw.Load(); draw != nil {
 		screen.DrawImage(draw, option)
@@ -231,28 +219,8 @@ func (e *eImage) Coloring(r, g, b, a uint8, tick int) Image {
 	return e
 }
 
-func (e *eImage) Spriteable(opt SpriteSheetOption) Image {
-	if opt.SpriteColumnCount == 0 {
-		opt.SpriteColumnCount = 1
-	}
-
-	if opt.SpriteRowCount == 0 {
-		opt.SpriteRowCount = 1
-	}
-
-	if opt.SpriteIndexCount == 0 {
-		opt.SpriteIndexCount = 1
-	}
-
+func (e *eImage) Spriteable(opt SpriteableOption) Image {
 	e.spriteOption.Store(opt)
-	return e
-}
-
-func (e *eImage) SpriteableHandler(h func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)) Image {
-	opt := e.spriteOption.Load()
-	opt.SpriteHandler = h
-	e.spriteOption.Store(opt)
-
 	return e
 }
 
@@ -305,13 +273,14 @@ func (e *eImage) Animation() Animation {
 }
 
 func (e *eImage) Bounds() (width int, height int) {
-	imageBounds := e.imageBounds.Load()
 	opt := e.spriteOption.Load()
-	if opt.SpriteHandler == nil {
+	if opt == nil {
+		imageBounds := e.imageBounds.Load()
 		return imageBounds.Dx(), imageBounds.Dy()
 	}
 
-	return imageBounds.Dx() / opt.SpriteColumnCount, imageBounds.Dy() / opt.SpriteRowCount
+	mask, _, _ := opt.Mask(e.image.Load(), ebiten.DefaultTPS, CurrentGameTime(), e.GetDirection())
+	return mask.Dx(), mask.Dy()
 }
 
 func (e *eImage) Aligned() Align {
@@ -336,11 +305,6 @@ func (e *eImage) Colored() (r, g, b, a uint8) {
 
 func (e *eImage) Debugged() bool {
 	return e.debug.Load() != nil
-}
-
-func (e *eImage) SpriteSheet() (SpriteSheetOption, bool) {
-	opt := e.spriteOption.Load()
-	return opt, opt.SpriteHandler != nil
 }
 
 func (e *eImage) ID() ID {
