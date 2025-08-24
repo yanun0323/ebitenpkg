@@ -15,6 +15,10 @@ func SpriteableOptionCounter(
 	columnCount, rowCount, maxIndex int,
 	handler func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int),
 ) SpriteableOption {
+	if maxIndex <= 0 {
+		maxIndex = columnCount * rowCount
+	}
+
 	return &spriteableOptionCounter{
 		columnCount: max(columnCount, 1),
 		rowCount:    max(rowCount, 1),
