@@ -19,7 +19,7 @@ type Image interface {
 	Rotating(angle float64, tick int, replace ...bool) Image
 	Color(r, g, b, a uint8) Image
 	Coloring(r, g, b, a uint8, tick int) Image
-	Spriteable(SpriteableOption) Image
+	Spriteable(SpritSheetOption) Image
 	Attach(parent Attachable) Image
 	Detach()
 	Collidable(space Space, group int) Image
@@ -43,7 +43,7 @@ type Image interface {
 	IsClick(x, y float64) bool
 }
 
-type SpriteableOption interface {
+type SpritSheetOption interface {
 	Mask(src image.Image, fps, timestamp int, direction Direction) (masked image.Rectangle, scaleX, scaleY int)
 }
 
@@ -99,7 +99,7 @@ type eImage struct {
 	drawCoords  value[image.Rectangle]
 	drawScale   value[image.Point]
 
-	spriteOption value[SpriteableOption]
+	spriteOption value[SpritSheetOption]
 
 	parent   value[Attachable]
 	children slices[Attachable]
@@ -219,7 +219,7 @@ func (e *eImage) Coloring(r, g, b, a uint8, tick int) Image {
 	return e
 }
 
-func (e *eImage) Spriteable(opt SpriteableOption) Image {
+func (e *eImage) Spriteable(opt SpritSheetOption) Image {
 	e.spriteOption.Store(opt)
 	return e
 }

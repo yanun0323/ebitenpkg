@@ -4,22 +4,22 @@ import (
 	"image"
 )
 
-type spriteableOptionCounter struct {
+type spriteSheetOptionCounter struct {
 	columnCount int
 	rowCount    int
 	maxIndex    int
 	execute     func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int)
 }
 
-func SpriteableOptionCounter(
+func SpriteSheetOptionCounter(
 	columnCount, rowCount, maxIndex int,
 	handler func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int),
-) SpriteableOption {
+) SpritSheetOption {
 	if maxIndex <= 0 {
 		maxIndex = columnCount * rowCount
 	}
 
-	return &spriteableOptionCounter{
+	return &spriteSheetOptionCounter{
 		columnCount: max(columnCount, 1),
 		rowCount:    max(rowCount, 1),
 		maxIndex:    max(maxIndex, 1),
@@ -27,7 +27,7 @@ func SpriteableOptionCounter(
 	}
 }
 
-func (opt *spriteableOptionCounter) Mask(src image.Image, fps, timestamp int, direction Direction) (image.Rectangle, int, int) {
+func (opt *spriteSheetOptionCounter) Mask(src image.Image, fps, timestamp int, direction Direction) (image.Rectangle, int, int) {
 	if opt.execute == nil {
 		return src.Bounds(), 1, 1
 	}

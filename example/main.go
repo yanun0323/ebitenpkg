@@ -41,7 +41,7 @@ func NewGame() ebiten.Game {
 
 	gopher := ebitenpkg.NewImage(helper.GopherImage()).
 		Align(ebitenpkg.AlignTopLeading).
-		Spriteable(ebitenpkg.SpriteableOptionCounter(1, 1, 1, func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
+		Spriteable(ebitenpkg.SpriteSheetOptionCounter(1, 1, 1, func(fps, timestamp int, direction ebitenpkg.Direction) (indexX, scaleX, scaleY int) {
 			return 0, 1, 1
 		})).
 		Move(300, 300).
@@ -70,7 +70,7 @@ func NewGame() ebiten.Game {
 		Move(400, 400).
 		Scale(5, 5).
 		Collidable(space, TypePlayer).
-		Spriteable(ebitenpkg.SpriteableOptionCounter(1, 6, 6, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+		Spriteable(ebitenpkg.SpriteSheetOptionCounter(1, 6, 6, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
 			idx := (timestamp / 5) % 2
 			sX, sY := 1, 1
 
@@ -93,7 +93,7 @@ func NewGame() ebiten.Game {
 		Scaling(2, 2, 300).
 		Rotating(-20, 300).
 		Collidable(space, TypeOthers).
-		Spriteable(ebitenpkg.SpriteableOptionCounter(24, 3, 58, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
+		Spriteable(ebitenpkg.SpriteSheetOptionCounter(24, 3, 58, func(fps, timestamp int, direction ebitenpkg.Direction) (index, scaleX, scaleY int) {
 			return (timestamp / 6) % fps, 1, 1
 		})).
 		WithAnimation(ebitenpkg.AnimationEaseInOut())

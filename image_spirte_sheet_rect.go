@@ -2,19 +2,19 @@ package ebitenpkg
 
 import "image"
 
-type spriteableOptionRect struct {
+type spriteSheetOptionRect struct {
 	rect image.Rectangle
 	fn   func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)
 }
 
-func SpriteableOptionRect(rect image.Rectangle, fn func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)) SpriteableOption {
-	return &spriteableOptionRect{
+func SpriteSheetOptionRect(rect image.Rectangle, fn func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)) SpritSheetOption {
+	return &spriteSheetOptionRect{
 		rect: rect,
 		fn:   fn,
 	}
 }
 
-func (opt *spriteableOptionRect) Mask(src image.Image, fps, timestamp int, direction Direction) (image.Rectangle, int, int) {
+func (opt *spriteSheetOptionRect) Mask(src image.Image, fps, timestamp int, direction Direction) (image.Rectangle, int, int) {
 	oX, oY, sX, sY := opt.fn(fps, timestamp, direction)
 	start := image.Point{
 		X: opt.rect.Dx() * oX,
