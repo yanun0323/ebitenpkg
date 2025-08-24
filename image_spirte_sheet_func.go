@@ -6,7 +6,7 @@ type spriteSheetOptionFunc struct {
 	fn func(src image.Image, fps, timestamp int, direction Direction) (mask image.Rectangle, scaleX, scaleY int)
 }
 
-func SpriteSheetOptionFunc(fn func(src image.Image, fps, timestamp int, direction Direction) (mask image.Rectangle, scaleX, scaleY int)) SpritSheetOption {
+func SpriteSheetOptionFunc(fn func(src image.Image, fps, timestamp int, direction Direction) (mask image.Rectangle, scaleX, scaleY int)) SpriteSheetOption {
 	return &spriteSheetOptionFunc{fn: fn}
 }
 

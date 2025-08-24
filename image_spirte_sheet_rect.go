@@ -7,7 +7,7 @@ type spriteSheetOptionRect struct {
 	fn   func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)
 }
 
-func SpriteSheetOptionRect(rect image.Rectangle, fn func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)) SpritSheetOption {
+func SpriteSheetOptionRect(rect image.Rectangle, fn func(fps, timestamp int, direction Direction) (offsetX, offsetY, scaleX, scaleY int)) SpriteSheetOption {
 	return &spriteSheetOptionRect{
 		rect: rect,
 		fn:   fn,

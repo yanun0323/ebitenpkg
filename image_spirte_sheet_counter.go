@@ -14,7 +14,7 @@ type spriteSheetOptionCounter struct {
 func SpriteSheetOptionCounter(
 	columnCount, rowCount, maxIndex int,
 	handler func(fps, timestamp int, direction Direction) (index int, scaleX, scaleY int),
-) SpritSheetOption {
+) SpriteSheetOption {
 	if maxIndex <= 0 {
 		maxIndex = columnCount * rowCount
 	}
