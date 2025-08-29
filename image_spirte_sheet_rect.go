@@ -17,8 +17,8 @@ func SpriteSheetOptionRect(rect image.Rectangle, fn func(fps, timestamp int, dir
 func (opt *spriteSheetOptionRect) Mask(src image.Image, fps, timestamp int, direction Direction) (image.Rectangle, int, int) {
 	oX, oY, sX, sY := opt.fn(fps, timestamp, direction)
 	start := image.Point{
-		X: opt.rect.Dx() * oX,
-		Y: opt.rect.Dy() * oY,
+		X: opt.rect.Min.X + opt.rect.Dx()*oX,
+		Y: opt.rect.Min.Y + opt.rect.Dy()*oY,
 	}
 
 	return image.Rectangle{
