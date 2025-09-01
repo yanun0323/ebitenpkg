@@ -6,19 +6,22 @@ package ebitenpkg
 //
 // controller is thread unsafe.
 type controller struct {
-	direction        Direction
-	align            Align
-	animation        Animation
-	movement         Vector
-	movementAddition chan *controllerDelta[Vector]
-	scaled           bool /* for init scale */
-	scale            Vector
-	scaleAddition    chan *controllerDelta[Vector]
-	rotation         float64
-	rotationAddition chan *controllerDelta[Vector]
-	colored          bool
-	color            [4]uint8
-	colorAddition    chan *controllerDelta[colors]
+	direction       Direction
+	align           Align
+	animation       Animation
+	movement        Vector
+	movementManager *animationManager[Vector]
+	scaled          bool /* for init scale */
+	scale           Vector
+	scaleManager    *animationManager[Vector]
+	rotation        rotation
+	rotationManager *animationManager[rotation]
+	colored         bool
+	color           [4]uint8
+	colorManager    *animationManager[colors]
+	masked          bool
+	mask            masker
+	maskManager     *animationManager[masker]
 }
 
 func (ctr *controller) SetAlign(a Align) {
@@ -27,23 +30,26 @@ func (ctr *controller) SetAlign(a Align) {
 
 func (ctr *controller) SetAnimation(a Animation) {
 	ctr.animation = a
-	resetAnimation(ctr.movementAddition, a)
-	resetAnimation(ctr.scaleAddition, a)
-	resetAnimation(ctr.rotationAddition, a)
-	resetAnimation(ctr.colorAddition, a)
+
+	if ctr.movementManager != nil {
+		ctr.movementManager.SetAnimation(a)
+	}
+
+	if ctr.scaleManager != nil {
+		ctr.scaleManager.SetAnimation(a)
+	}
+
+	if ctr.rotationManager != nil {
+		ctr.rotationManager.SetAnimation(a)
+	}
+
+	if ctr.colorManager != nil {
+		ctr.colorManager.SetAnimation(a)
+	}
 }
 
 func (ctr *controller) GetAnimation() Animation {
 	return ctr.animation
-}
-
-func resetAnimation[T deltaValue[T]](ch chan *controllerDelta[T], a Animation) {
-	l := len(ch)
-	for i := 0; i < l; i++ {
-		c := <-ch
-		c.animation = a
-		ch <- c
-	}
 }
 
 func (ctr *controller) SetMove(x, y float64, replace ...bool) {
@@ -61,19 +67,23 @@ func (ctr *controller) SetMoving(x, y float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(Vector{x, y}, tick, len(replace) != 0 && replace[0], ctr.animation)
-	if rp || ctr.movementAddition == nil {
-		ctr.movementAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
+	if ctr.movementManager == nil {
+		ctr.movementManager = &animationManager[Vector]{}
 	}
 
-	ctr.movementAddition <- add
+	ctr.movementManager.AddAnimation(newAnimationValue(
+		Vector{X: x - ctr.movement.X, Y: y - ctr.movement.Y},
+		tick,
+		len(replace) != 0 && replace[0],
+		ctr.animation,
+	))
 }
 
 func (ctr *controller) SetRotate(degree float64, replace ...bool) {
 	if len(replace) != 0 && replace[0] {
-		ctr.rotation = degree
+		ctr.rotation = rotation(degree)
 	} else {
-		ctr.rotation += degree
+		ctr.rotation = ctr.rotation.Add(rotation(degree))
 	}
 }
 
@@ -82,12 +92,16 @@ func (ctr *controller) SetRotating(degree float64, tick int, replace ...bool) {
 		return
 	}
 
-	add, rp := newControllerDelta(Vector{X: degree}, tick, len(replace) != 0 && replace[0], ctr.animation)
-	if rp || ctr.rotationAddition == nil {
-		ctr.rotationAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
+	if ctr.rotationManager == nil {
+		ctr.rotationManager = &animationManager[rotation]{}
 	}
 
-	ctr.rotationAddition <- add
+	ctr.rotationManager.AddAnimation(newAnimationValue(
+		rotation(degree).Sub(ctr.rotation),
+		tick,
+		len(replace) != 0 && replace[0],
+		ctr.animation,
+	))
 }
 
 func (ctr *controller) SetScale(x, y float64, replace ...bool) {
@@ -113,12 +127,16 @@ func (ctr *controller) SetScaling(x, y float64, tick int, replace ...bool) {
 		ctr.scaled = true
 	}
 
-	add, rp := newControllerDelta(Vector{x, y}, tick, len(replace) != 0 && replace[0], ctr.animation)
-	if rp || ctr.scaleAddition == nil {
-		ctr.scaleAddition = make(chan *controllerDelta[Vector], _defaultChanCap)
+	if ctr.scaleManager == nil {
+		ctr.scaleManager = &animationManager[Vector]{}
 	}
 
-	ctr.scaleAddition <- add
+	ctr.scaleManager.AddAnimation(newAnimationValue(
+		Vector{X: x - ctr.scale.X, Y: y - ctr.scale.Y},
+		tick,
+		len(replace) != 0 && replace[0],
+		ctr.animation,
+	))
 }
 
 func (ctr *controller) SetColor(r, g, b, a uint8) {
@@ -140,12 +158,52 @@ func (ctr *controller) SetColoring(r, g, b, a uint8, tick int) {
 		ctr.colored = true
 	}
 
-	add, rp := newControllerDelta(colors{r, g, b, a}, tick, true, ctr.animation)
-	if rp || ctr.colorAddition == nil {
-		ctr.colorAddition = make(chan *controllerDelta[colors], _defaultChanCap)
+	if ctr.colorManager == nil {
+		ctr.colorManager = &animationManager[colors]{}
 	}
 
-	ctr.colorAddition <- add
+	ctr.colorManager.AddAnimation(newAnimationValue(
+		colors{r - ctr.color[0], g - ctr.color[1], b - ctr.color[2], a - ctr.color[3]},
+		tick,
+		true,
+		ctr.animation,
+	))
+}
+
+func (ctr *controller) SetMask(mk masker) {
+	if !ctr.masked {
+		ctr.mask = masker{0, 0, 1, 1}
+		ctr.masked = true
+	}
+
+	ctr.mask = mk
+}
+
+func (ctr *controller) SetMasking(mk masker, tick int) {
+	if tick <= 0 {
+		return
+	}
+
+	if !ctr.masked {
+		ctr.mask = masker{0, 0, 1, 1}
+		ctr.masked = true
+	}
+
+	if ctr.maskManager == nil {
+		ctr.maskManager = &animationManager[masker]{}
+	}
+
+	ctr.maskManager.AddAnimation(newAnimationValue(
+		masker{
+			X: mk.X - ctr.mask.X,
+			Y: mk.Y - ctr.mask.Y,
+			W: mk.W - ctr.mask.W,
+			H: mk.H - ctr.mask.H,
+		},
+		tick,
+		true,
+		ctr.animation,
+	))
 }
 
 func (ctr *controller) GetAlign() Align {
@@ -153,19 +211,9 @@ func (ctr *controller) GetAlign() Align {
 }
 
 func (ctr *controller) GetMove() (x, y float64) {
-	tick := CurrentGameTime()
-	cache := ctr.movement
-	for i := len(ctr.movementAddition) - 1; i >= 0; i-- {
-		add := <-ctr.movementAddition
-		if add.IsComplete() {
-			continue
-		}
-
-		cache = add.CalculateResult(tick, cache)
-		ctr.movementAddition <- add
+	if ctr.movementManager != nil {
+		ctr.movement = ctr.movementManager.GetAnimationResult(ctr.movement)
 	}
-
-	ctr.movement.X, ctr.movement.Y = cache.X, cache.Y
 
 	return ctr.movement.X, ctr.movement.Y
 }
@@ -175,40 +223,22 @@ func (ctr *controller) GetDirection() Direction {
 }
 
 func (ctr *controller) GetRotate() float64 {
-	tick := CurrentGameTime()
-	cache := ctr.rotation
-	for i := len(ctr.rotationAddition) - 1; i >= 0; i-- {
-		add := <-ctr.rotationAddition
-		if add.IsComplete() {
-			continue
-		}
-
-		cache = add.CalculateResult(tick, Vector{X: cache}).X
-		ctr.rotationAddition <- add
+	if ctr.rotationManager != nil {
+		ctr.rotation = ctr.rotationManager.GetAnimationResult(ctr.rotation)
 	}
 
-	ctr.rotation = cache
-
-	return ctr.rotation
+	return ctr.rotation.Float64()
 }
 
 func (ctr *controller) GetScale() (x, y float64) {
 	if !ctr.scaled {
 		return 1, 1
 	}
-	tick := CurrentGameTime()
-	cache := ctr.scale
-	for i := len(ctr.scaleAddition) - 1; i >= 0; i-- {
-		add := <-ctr.scaleAddition
-		if add.IsComplete() {
-			continue
-		}
 
-		cache = add.CalculateResult(tick, cache)
-		ctr.scaleAddition <- add
+	if ctr.scaleManager != nil {
+		ctr.scale = ctr.scaleManager.GetAnimationResult(ctr.scale)
 	}
 
-	ctr.scale = cache
 	return ctr.scale.X, ctr.scale.Y
 }
 
@@ -217,20 +247,23 @@ func (ctr *controller) GetColor() (r, g, b, a uint8) {
 		return 255, 255, 255, 255
 	}
 
-	tick := CurrentGameTime()
-	cache := ctr.color
-	for i := len(ctr.colorAddition) - 1; i >= 0; i-- {
-		add := <-ctr.colorAddition
-		if add.IsComplete() {
-			continue
-		}
-
-		cache = add.CalculateResult(tick, cache)
-		ctr.colorAddition <- add
+	if ctr.colorManager != nil {
+		ctr.color = ctr.colorManager.GetAnimationResult(ctr.color)
 	}
 
-	ctr.color = cache
 	return ctr.color[0], ctr.color[1], ctr.color[2], ctr.color[3]
+}
+
+func (ctr *controller) GetMask() masker {
+	if !ctr.masked {
+		return masker{0, 0, 1, 1}
+	}
+
+	if ctr.maskManager != nil {
+		ctr.mask = ctr.maskManager.GetAnimationResult(ctr.mask)
+	}
+
+	return ctr.mask
 }
 
 func (ctr *controller) GetBarycenter(parentMovement ...Vector) (float64, float64) {

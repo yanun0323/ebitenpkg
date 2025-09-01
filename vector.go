@@ -24,3 +24,7 @@ func (v Vector) Ratio(r float64) Vector {
 		Y: v.Y * r,
 	}
 }
+
+func (v Vector) Limit() Vector {
+	return v
+}

@@ -49,6 +49,8 @@ func NewGame() ebiten.Game {
 		Color(255, 0, 0, 0).
 		Coloring(255, 255, 255, 255, 60).
 		Collidable(space, TypeOpponent).
+		// Mask(0.3, 0.3, 0.5, 0.5).
+		Masking(0, 0, 0.5, 0.5, 60).
 		Scale(1, 1)
 
 	pikachuSprite := ebitenpkg.

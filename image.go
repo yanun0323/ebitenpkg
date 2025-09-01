@@ -19,6 +19,8 @@ type Image interface {
 	Rotating(angle float64, tick int, replace ...bool) Image
 	Color(r, g, b, a uint8) Image
 	Coloring(r, g, b, a uint8, tick int) Image
+	Mask(x, y, w, h float64) Image
+	Masking(x, y, w, h float64, tick int) Image
 	Spriteable(SpriteSheetOption) Image
 	Attach(parent Attachable) Image
 	Detach()
@@ -35,6 +37,7 @@ type Image interface {
 	Scaled() (x, y float64)
 	Rotated() (angle float64)
 	Colored() (r, g, b, a uint8)
+	Masked() (x, y, w, h float64)
 	Debugged() bool
 
 	ID() ID
@@ -164,6 +167,10 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	option := e.getDrawOption(masked.Dx(), masked.Dy(), &e.controller, float64(sX), float64(sY), e.Parent())
 
 	if draw := e.draw.Load(); draw != nil {
+		if mk := e.GetMask(); !mk.NoMask() {
+			draw = mk.Apply(draw)
+		}
+
 		screen.DrawImage(draw, option)
 	}
 
@@ -216,6 +223,16 @@ func (e *eImage) Color(r, g, b, a uint8) Image {
 
 func (e *eImage) Coloring(r, g, b, a uint8, tick int) Image {
 	e.controller.SetColoring(r, g, b, a, tick)
+	return e
+}
+
+func (e *eImage) Mask(x, y, w, h float64) Image {
+	e.controller.SetMask(masker{X: x, Y: y, W: w, H: h})
+	return e
+}
+
+func (e *eImage) Masking(x, y, w, h float64, tick int) Image {
+	e.controller.SetMasking(masker{X: x, Y: y, W: w, H: h}, tick)
 	return e
 }
 
@@ -301,6 +318,11 @@ func (e *eImage) Rotated() (angle float64) {
 
 func (e *eImage) Colored() (r, g, b, a uint8) {
 	return e.controller.GetColor()
+}
+
+func (e *eImage) Masked() (x, y, w, h float64) {
+	mk := e.controller.GetMask()
+	return mk.X, mk.Y, mk.W, mk.H
 }
 
 func (e *eImage) Debugged() bool {
