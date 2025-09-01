@@ -44,6 +44,8 @@ type Image interface {
 	Group() int
 	Parent() Attachable
 	IsClick(x, y float64) bool
+
+	Copy() Image
 }
 
 type SpriteSheetOption interface {
@@ -349,4 +351,28 @@ func (e *eImage) IsClick(x, y float64) bool {
 	imageBounds := e.imageBounds.Load()
 	vertexes := getVertexes(float64(imageBounds.Dx()), float64(imageBounds.Dy()), e, e.Parent())
 	return isInside(vertexes, Vector{X: x, Y: y})
+}
+
+func (e *eImage) Copy() Image {
+	result := &eImage{
+		controller:     e.controller.Copy(),
+		id:             e.id.Copy(),
+		image:          e.image.Copy(),
+		imageBounds:    e.imageBounds.Copy(),
+		draw:           e.draw.Copy(),
+		drawCoords:     e.drawCoords.Copy(),
+		drawScale:      e.drawScale.Copy(),
+		spriteOption:   e.spriteOption.Copy(),
+		parent:         e.parent.Copy(),
+		collisionSpace: e.collisionSpace.Copy(),
+		collisionGroup: e.collisionGroup.Copy(),
+		debug:          e.debug.Copy(),
+	}
+
+	e.children.Range(func(_ int, c Attachable) bool {
+		result.children.Append(c)
+		return true
+	})
+
+	return result
 }

@@ -24,6 +24,15 @@ type controller struct {
 	maskManager     *animationManager[masker]
 }
 
+func (ctr controller) Copy() controller {
+	ctr.movementManager = ctr.movementManager.Copy()
+	ctr.scaleManager = ctr.scaleManager.Copy()
+	ctr.rotationManager = ctr.rotationManager.Copy()
+	ctr.colorManager = ctr.colorManager.Copy()
+	ctr.maskManager = ctr.maskManager.Copy()
+	return ctr
+}
+
 func (ctr *controller) SetAlign(a Align) {
 	ctr.align = a
 }

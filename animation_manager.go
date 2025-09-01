@@ -33,6 +33,35 @@ func newAnimationValue[T animatableValue[T]](delta T, duration int, replace bool
 	}
 }
 
+func (av *animatedValue[T]) Copy() *animatedValue[T] {
+	return &animatedValue[T]{
+		lastValue:  av.lastValue,
+		deltaValue: av.deltaValue,
+		duration:   av.duration,
+		startTime:  av.startTime,
+		animation:  av.animation,
+		isComplete: av.isComplete,
+		replace:    av.replace,
+	}
+}
+
+func (am *animationManager[T]) Copy() *animationManager[T] {
+	am.mu.RLock()
+	defer am.mu.RUnlock()
+
+	result := &animationManager[T]{}
+	if len(am.animations) == 0 {
+		return result
+	}
+
+	result.animations = make([]*animatedValue[T], 0, len(am.animations))
+	for _, anim := range am.animations {
+		result.animations = append(result.animations, anim.Copy())
+	}
+
+	return result
+}
+
 func (am *animationManager[T]) SetAnimation(a Animation) {
 	am.mu.Lock()
 	defer am.mu.Unlock()

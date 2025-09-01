@@ -247,3 +247,11 @@ func (ig *ImageGroup) IsClick(x, y float64) bool {
 	}
 	return false
 }
+
+func (ig *ImageGroup) Copy() Image {
+	result := &ImageGroup{}
+	for _, image := range ig.group {
+		result.Insert(image.Copy())
+	}
+	return result
+}

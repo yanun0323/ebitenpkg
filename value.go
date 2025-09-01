@@ -5,9 +5,8 @@ import (
 )
 
 type value[T any] struct {
-	defaultValue T
-	value        atomic.Value
-	hasValue     atomic.Value
+	value    atomic.Value
+	hasValue atomic.Value
 }
 
 // newValue panics if val is nil
@@ -25,13 +24,13 @@ func (v *value[T]) Load() T {
 	if v.HasValue() {
 		value := v.value.Load()
 		if value == nil {
-			return v.defaultValue
+			return *new(T)
 		}
 
 		return value.(T)
 	}
 
-	return v.defaultValue
+	return *new(T)
 }
 
 // Store panics if val is nil
@@ -45,11 +44,11 @@ func (v *value[T]) Swap(val T) (T, bool) {
 	swapped := v.value.Swap(val)
 	if !v.HasValue() {
 		v.hasValue.Store(true)
-		return v.defaultValue, false
+		return *new(T), false
 	}
 
 	if swapped == nil {
-		return v.defaultValue, false
+		return *new(T), false
 	}
 
 	return swapped.(T), true
@@ -61,7 +60,7 @@ func (v *value[T]) Delete() (T, bool) {
 		return v.Load(), true
 	}
 
-	return v.defaultValue, false
+	return *new(T), false
 }
 
 func (v *value[T]) HasValue() bool {
@@ -71,4 +70,13 @@ func (v *value[T]) HasValue() bool {
 	}
 
 	return ok.(bool)
+}
+
+func (v *value[T]) Copy() value[T] {
+	result := value[T]{}
+	if v.HasValue() {
+		result.Store(v.Load())
+	}
+
+	return result
 }
