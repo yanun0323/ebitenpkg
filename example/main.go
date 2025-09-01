@@ -24,6 +24,7 @@ type Game struct {
 	PikachuSprite ebitenpkg.Image
 	PikachuIdle   ebitenpkg.Image
 	Gopher        ebitenpkg.Image
+	Gopher2       ebitenpkg.Image
 	GameInfo      ebitenpkg.Text
 }
 
@@ -52,6 +53,14 @@ func NewGame() ebiten.Game {
 		// Mask(0.3, 0.3, 0.5, 0.5).
 		Masking(0, 0, 0.5, 0.5, 60).
 		Scale(1, 1)
+
+	gopher2 := ebitenpkg.NewImage(helper.GopherImage()).
+		Align(ebitenpkg.AlignTopLeading).
+		Move(100, 300).
+		Mask(0, 0, 0.5, 1).
+		// Masking(0, 0, 0.5, 0.5, 60).
+		// Masking(0, 0, 0.5, 0.5, 60).
+		Scale(2, 2)
 
 	pikachuSprite := ebitenpkg.
 		NewImage(helper.PikachuSpriteImage(),
@@ -103,6 +112,7 @@ func NewGame() ebiten.Game {
 	return &Game{
 		Space:         space,
 		Gopher:        gopher,
+		Gopher2:       gopher2,
 		PikachuSprite: pikachuSprite,
 		PikachuIdle:   pikachuIdle,
 		Walls: []ebitenpkg.Image{
@@ -149,6 +159,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	/* draw game objects */
 	g.Gopher.Draw(screen)
+	g.Gopher2.Draw(screen)
 	g.PikachuSprite.Draw(screen)
 
 	g.PikachuIdle.Draw(screen)

@@ -139,7 +139,11 @@ func (e *eImage) Draw(screen *ebiten.Image) {
 	if spriteOption == nil {
 		imageBounds := e.imageBounds.Load()
 		option := e.getDrawOption(imageBounds.Dx(), imageBounds.Dy(), &e.controller, 1, 1, e.Parent())
-		screen.DrawImage(e.image.Load(), option)
+		img := e.image.Load()
+		if mk := e.GetMask(); !mk.NoMask() {
+			img = mk.Apply(img)
+		}
+		screen.DrawImage(img, option)
 
 		if debug := e.debug.Load(); debug != nil {
 			screen.DrawImage(debug, option)
